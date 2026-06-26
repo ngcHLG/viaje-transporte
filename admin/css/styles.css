@@ -119,7 +119,7 @@
     margin-left: 0;
 }
 
-/* Comportamiento responsive */
+/* Comportamiento responsive – tablet y menor */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
@@ -131,9 +131,12 @@
         margin-left: 0 !important;
         padding: 1rem;
     }
-    /* Reducir padding en tarjetas */
     .card-body {
         padding: 1rem;
+    }
+    /* Títulos de sección más compactos */
+    h2 {
+        font-size: 1.4rem;
     }
 }
 
@@ -151,7 +154,6 @@
     font-size: 2rem;
 }
 
-/* Ajuste de icono en móvil */
 @media (max-width: 576px) {
     .stat-card .icon {
         font-size: 1.5rem;
@@ -165,7 +167,7 @@
 .table-responsive {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    -webkit-overflow-scrolling: touch; /* Mejor scroll en iOS */
+    -webkit-overflow-scrolling: touch;
 }
 .table th {
     font-weight: 600;
@@ -188,7 +190,6 @@
     border-bottom-color: rgba(255,255,255,0.1);
 }
 
-/* Celda de acciones en tablas (botones) */
 .table td .btn {
     margin-bottom: 2px;
 }
@@ -215,13 +216,13 @@
     color: #721c24;
 }
 
-/* Cabecera de tarjeta con botón (apilar en móvil) */
+/* Cabecera de tarjeta con botón */
 .card-header .d-flex {
     flex-wrap: wrap;
     gap: 0.5rem;
 }
 
-/* Tabla de embarque (columnas estrechas en móvil) */
+/* Tabla de embarque */
 #contenedorEmbarque .table {
     font-size: 0.85rem;
 }
@@ -241,9 +242,82 @@
     }
 }
 
-/* Ajuste fino del login en móviles pequeños */
+/* Login en móviles pequeños */
 @media (max-width: 400px) {
     .card.p-4 {
         padding: 1rem !important;
+    }
+}
+
+/* ==================================================
+   NUEVAS REGLAS PARA PANTALLAS MUY PEQUEÑAS (≥280px)
+   ================================================== */
+@media (max-width: 500px) {
+    /* Reducir aún más el padding general */
+    .main-content {
+        padding: 0.75rem !important;
+    }
+
+    /* Campos de formulario, selects y textareas siempre al 100% */
+    .form-control,
+    .form-select,
+    textarea.form-control {
+        width: 100% !important;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    /* Botones de acción ocupan todo el ancho y se apilan */
+    .btn {
+        white-space: normal;
+        word-break: break-word;
+    }
+    .btn.w-100-mobile,
+    .d-flex.flex-wrap .btn {
+        width: 100% !important;
+    }
+
+    /* Ajuste de tamaño de fuente en etiquetas y textos pequeños */
+    .form-label,
+    .text-secondary,
+    small {
+        font-size: 0.8rem;
+    }
+
+    /* Espaciado entre botones en grupo */
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+
+    /* Las tablas siempre deben tener scroll horizontal */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+
+    /* Celdas de tabla con menos padding */
+    .table td,
+    .table th {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Modales más compactos */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100vw - 1rem);
+    }
+
+    /* Encabezados dentro de tarjetas más pequeños */
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    /* Ocultar iconos decorativos muy grandes en tarjetas de estadísticas */
+    .stat-card .icon {
+        font-size: 1.25rem;
+    }
+    .stat-card h3 {
+        font-size: 1.1rem;
     }
 }
