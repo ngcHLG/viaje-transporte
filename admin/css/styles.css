@@ -30,9 +30,15 @@
 .top-bar .brand {
     font-weight: 600;
     color: var(--azul-pastel);
-    font-size: 1.1rem;
+    font-size: 1rem;
     display: flex;
     align-items: center;
+}
+/* Ocultar texto de la marca en móviles muy estrechos */
+@media (max-width: 400px) {
+    .top-bar .brand span {
+        display: none;
+    }
 }
 .top-bar .btn-toggle-sidebar {
     background: none;
@@ -52,7 +58,7 @@
     background-color: #ffffff;
     border-right: 1px solid rgba(0,0,0,0.05);
     position: fixed;
-    top: 56px;          /* justo debajo de la barra */
+    top: 56px;
     bottom: 0;
     left: 0;
     z-index: 1040;
@@ -94,11 +100,11 @@
 .main-content {
     flex: 1;
     margin-left: 250px;
-    padding: 2rem;
+    padding: 1.5rem;
     min-height: 100vh;
     background-color: var(--fondo-claro);
     transition: margin-left 0.3s ease;
-    margin-top: 56px;   /* altura de la barra superior */
+    margin-top: 56px;
 }
 [data-bs-theme="dark"] .main-content {
     background-color: #212529;
@@ -123,6 +129,11 @@
     }
     .main-content {
         margin-left: 0 !important;
+        padding: 1rem;
+    }
+    /* Reducir padding en tarjetas */
+    .card-body {
+        padding: 1rem;
     }
 }
 
@@ -140,15 +151,27 @@
     font-size: 2rem;
 }
 
-/* Tabla de datos */
+/* Ajuste de icono en móvil */
+@media (max-width: 576px) {
+    .stat-card .icon {
+        font-size: 1.5rem;
+    }
+    .stat-card h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Tabla de datos general */
 .table-responsive {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    -webkit-overflow-scrolling: touch; /* Mejor scroll en iOS */
 }
 .table th {
     font-weight: 600;
     background-color: var(--gris-azulado);
     color: var(--texto-principal);
+    white-space: nowrap;
 }
 [data-bs-theme="dark"] .table th {
     background-color: #3a4755;
@@ -163,6 +186,11 @@
 [data-bs-theme="dark"] .card-header {
     background-color: rgba(255,255,255,0.05);
     border-bottom-color: rgba(255,255,255,0.1);
+}
+
+/* Celda de acciones en tablas (botones) */
+.table td .btn {
+    margin-bottom: 2px;
 }
 
 /* Badges personalizados */
@@ -185,4 +213,30 @@
 .badge-cancelada {
     background-color: var(--rojo-pastel);
     color: #721c24;
+}
+
+/* Cabecera de tarjeta con botón (apilar en móvil) */
+.card-header .d-flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Tabla de embarque (columnas estrechas en móvil) */
+#contenedorEmbarque .table {
+    font-size: 0.85rem;
+}
+@media (max-width: 576px) {
+    #contenedorEmbarque .table thead th,
+    #contenedorEmbarque .table tbody td {
+        padding: 0.25rem 0.35rem;
+        font-size: 0.75rem;
+    }
+    #contenedorEmbarque .btn-sm {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.7rem;
+    }
+    #contenedorEmbarque .form-check-input {
+        width: 0.9em;
+        height: 0.9em;
+    }
 }
