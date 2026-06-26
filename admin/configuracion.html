@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración General - Administración</title>
     <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
-    
     <link href="css/styles.css" rel="stylesheet">
 </head>
 <body class="admin-body">
@@ -24,15 +22,15 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Nombre de la agencia</label>
                             <input type="text" class="form-control" id="confAgenciaNombre" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Email de contacto</label>
                             <input type="email" class="form-control" id="confAgenciaEmail" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Teléfono de contacto</label>
                             <input type="text" class="form-control" id="confAgenciaTelefono" required>
                         </div>
@@ -47,48 +45,27 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label">Días de operación</label>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaLunes">
-                                    <label class="form-check-label">Lunes</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaMartes">
-                                    <label class="form-check-label">Martes</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaMiercoles">
-                                    <label class="form-check-label">Miércoles</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaJueves">
-                                    <label class="form-check-label">Jueves</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaViernes">
-                                    <label class="form-check-label">Viernes</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaSabado">
-                                    <label class="form-check-label">Sábado</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="diaDomingo">
-                                    <label class="form-check-label">Domingo</label>
-                                </div>
+                            <div class="row row-cols-2 g-2">
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaLunes"><label class="form-check-label small">Lunes</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaMartes"><label class="form-check-label small">Martes</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaMiercoles"><label class="form-check-label small">Miércoles</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaJueves"><label class="form-check-label small">Jueves</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaViernes"><label class="form-check-label small">Viernes</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaSabado"><label class="form-check-label small">Sábado</label></div></div>
+                                <div class="col"><div class="form-check"><input class="form-check-input" type="checkbox" id="diaDomingo"><label class="form-check-label small">Domingo</label></div></div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Hora de apertura</label>
                             <input type="time" class="form-control" id="confHoraApertura">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Hora de cierre</label>
                             <input type="time" class="form-control" id="confHoraCierre">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label">Anticipación máxima (días)</label>
                             <input type="number" class="form-control" id="confAnticipacion" min="1" max="365" value="30">
                             <small class="text-secondary">Cuántos días en el futuro se pueden reservar.</small>
@@ -103,7 +80,7 @@
                     <h5 class="mb-0"><i class="bi bi-chat-square-text me-2"></i>Plantillas de notificación</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-secondary">Variables disponibles: <code>{nombre}</code>, <code>{codigo}</code>, <code>{ruta}</code>, <code>{fecha}</code>, <code>{hora}</code>, <code>{vehiculo}</code>, <code>{chofer}</code></p>
+                    <p class="text-secondary small">Variables disponibles: <code>{nombre}</code>, <code>{codigo}</code>, <code>{ruta}</code>, <code>{fecha}</code>, <code>{hora}</code>, <code>{vehiculo}</code>, <code>{chofer}</code></p>
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label fw-semibold">Solicitud recibida (pendiente)</label>
@@ -129,11 +106,11 @@
                 </div>
             </div>
 
-            <div class="d-flex gap-2 mb-4">
-                <button type="submit" class="btn btn-primary">
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button type="submit" class="btn btn-primary w-100 w-md-auto">
                     <i class="bi bi-check-lg me-2"></i>Guardar configuración
                 </button>
-                <button type="button" class="btn btn-outline-secondary" id="btnRestablecer">
+                <button type="button" class="btn btn-outline-secondary w-100 w-md-auto" id="btnRestablecer">
                     <i class="bi bi-arrow-counterclockwise me-2"></i>Restablecer valores predeterminados
                 </button>
             </div>
@@ -161,12 +138,12 @@
     <script src="../js/supabase-config.js"></script>
     <script src="js/admin.js"></script>
     <script>
-        // Valores predeterminados (si no hay nada en la BD)
+        // (El script se mantiene exactamente igual al que ya tienes)
         const defaults = {
             agenciaNombre: 'Viajes Transporte',
             agenciaEmail: 'info@viajestransporte.cu',
             agenciaTelefono: '+53 5XXX XXXX',
-            diasOperacion: [1, 2, 3, 4, 5, 6], // Lunes a Sábado
+            diasOperacion: [1, 2, 3, 4, 5, 6],
             horaApertura: '06:00',
             horaCierre: '22:00',
             anticipacion: 30,
@@ -179,15 +156,12 @@
             }
         };
 
-        // Cargar configuración desde Supabase
         async function cargarConfiguracion() {
             const { data, error } = await window.supabaseClient
                 .from('configuracion')
                 .select('datos')
                 .eq('id', 1)
                 .single();
-
-            // Si no hay registro o hay error, usar defaults
             const config = (error || !data) ? defaults : data.datos;
 
             document.getElementById('confAgenciaNombre').value = config.agenciaNombre || '';
@@ -197,13 +171,11 @@
             document.getElementById('confHoraCierre').value = config.horaCierre || '';
             document.getElementById('confAnticipacion').value = config.anticipacion || 30;
 
-            // Días de operación
             const diasIds = ['diaLunes', 'diaMartes', 'diaMiercoles', 'diaJueves', 'diaViernes', 'diaSabado', 'diaDomingo'];
             diasIds.forEach((id, index) => {
                 document.getElementById(id).checked = (config.diasOperacion || []).includes(index + 1);
             });
 
-            // Plantillas
             document.getElementById('plantillaPendiente').value = config.plantillas?.pendiente || '';
             document.getElementById('plantillaConfirmada').value = config.plantillas?.confirmada || '';
             document.getElementById('plantillaEnTransito').value = config.plantillas?.en_transito || '';
@@ -211,7 +183,6 @@
             document.getElementById('plantillaCancelada').value = config.plantillas?.cancelada || '';
         }
 
-        // Guardar configuración en Supabase (upsert)
         async function guardarConfiguracion() {
             const diasIds = ['diaLunes', 'diaMartes', 'diaMiercoles', 'diaJueves', 'diaViernes', 'diaSabado', 'diaDomingo'];
             const diasOperacion = [];
@@ -249,7 +220,6 @@
             }
         }
 
-        // Restablecer valores predeterminados (sin guardar)
         function restablecerDefaults() {
             if (!confirm('¿Restablecer todos los valores a los predeterminados? Se perderán los cambios no guardados.')) return;
 
@@ -273,22 +243,18 @@
             document.getElementById('plantillaCancelada').value = config.plantillas.cancelada;
         }
 
-        // Pequeño modal para mensajes
         function mostrarMensaje(titulo, mensaje) {
             document.getElementById('modalMensajeTitulo').textContent = titulo;
             document.getElementById('modalMensajeCuerpo').textContent = mensaje;
             new bootstrap.Modal(document.getElementById('modalMensaje')).show();
         }
 
-        // Inicializar página
         document.addEventListener('DOMContentLoaded', function() {
             cargarConfiguracion();
-
             document.getElementById('formConfiguracion').addEventListener('submit', function(e) {
                 e.preventDefault();
                 guardarConfiguracion();
             });
-
             document.getElementById('btnRestablecer').addEventListener('click', restablecerDefaults);
         });
     </script>
