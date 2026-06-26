@@ -10,13 +10,27 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <link href="css/styles.css" rel="stylesheet">
+    <style>
+        /* Mejoras responsive para la tabla de tarifas (≥280px) */
+        @media (max-width: 576px) {
+            #tablaTarifas td,
+            #tablaTarifas th {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.3rem;
+            }
+            #tablaTarifas .btn {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
+    </style>
 </head>
 <body class="admin-body">
     <div id="sidebarContainer"></div>
     <main class="main-content">
         <h2 class="mb-4"><i class="bi bi-cash-coin me-2"></i>Gestión de Tarifas</h2>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 class="mb-0">Rutas y precios</h5>
             <button class="btn btn-primary btn-sm" onclick="abrirModalTarifa()">
                 <i class="bi bi-plus-lg me-1"></i> Nueva ruta
