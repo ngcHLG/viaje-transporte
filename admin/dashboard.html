@@ -21,6 +21,29 @@
             background-color: #3a4755;
             color: #EAEAEA;
         }
+
+        /* Mejoras específicas para el dashboard en pantallas muy pequeñas (≥280px) */
+        @media (max-width: 500px) {
+            /* Ajuste de tarjetas de estadísticas en móvil: 100% ancho */
+            .stat-card-col {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+            /* Reducir tamaño de fuente en textos secundarios */
+            #contenedorEmbarque small,
+            #contenedorEmbarque .text-secondary {
+                font-size: 0.7rem;
+            }
+            /* Permitir que los códigos de solicitud se rompan */
+            #contenedorEmbarque strong {
+                word-break: break-all;
+            }
+            /* Ocultar icono decorativo en encabezados de vehículo si molesta */
+            .vehiculo-header i.bi-bus-front {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body class="admin-body">
@@ -28,9 +51,9 @@
     <main class="main-content">
         <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
 
-        <!-- Tarjetas de estadísticas -->
+        <!-- Tarjetas de estadísticas (ahora col-12 en móvil muy pequeño) -->
         <div class="row g-3 justify-content-center mb-4">
-            <div class="col-lg-3 col-md-6 col-6">
+            <div class="col-lg-3 col-md-6 col-12 stat-card-col">
                 <div class="card stat-card p-3 bg-warning-subtle h-100">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><p class="mb-1 text-secondary small">Pendientes</p><h3 class="fw-bold" id="countPendientes">0</h3></div>
@@ -38,7 +61,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-6">
+            <div class="col-lg-3 col-md-6 col-12 stat-card-col">
                 <div class="card stat-card p-3 bg-info-subtle h-100">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><p class="mb-1 text-secondary small">Confirmadas hoy</p><h3 class="fw-bold" id="countConfirmadas">0</h3></div>
@@ -46,7 +69,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-6">
+            <div class="col-lg-3 col-md-6 col-12 stat-card-col">
                 <div class="card stat-card p-3 bg-success-subtle h-100">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><p class="mb-1 text-secondary small">En tránsito</p><h3 class="fw-bold" id="countEnTransito">0</h3></div>
@@ -54,7 +77,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 col-6">
+            <div class="col-lg-3 col-md-6 col-12 stat-card-col">
                 <div class="card stat-card p-3 bg-danger-subtle h-100">
                     <div class="d-flex justify-content-between align-items-center">
                         <div><p class="mb-1 text-secondary small">Canceladas</p><h3 class="fw-bold" id="countCanceladas">0</h3></div>
@@ -78,7 +101,7 @@
         </div>
     </main>
 
-    <!-- Modal para editar pasajero (reemplazo) -->
+    <!-- Modales (sin cambios) -->
     <div class="modal fade" id="modalEditarPasajero" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -101,7 +124,6 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación "Poner en ruta" -->
     <div class="modal fade" id="modalConfirmarRuta" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -121,7 +143,6 @@
         </div>
     </div>
 
-    <!-- Modal para seleccionar fecha y vehículo para imprimir manifiesto -->
     <div class="modal fade" id="modalSeleccionManifiesto" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -258,10 +279,10 @@
                 const choferTexto = v.choferes ? `${v.choferes.nombre} (Lic. ${v.choferes.licencia || ''})` : '-';
 
                 html += `
-                    <div class="bg-light p-3 border-bottom">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0"><i class="bi bi-bus-front me-2"></i>${vehiculoTexto} · ${choferTexto}</h6>
-                            <button class="btn btn-sm btn-success poner-en-ruta-vehiculo" data-vehiculo-id="${vId}">
+                    <div class="bg-light p-3 border-bottom vehiculo-header">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center">
+                            <h6 class="mb-0 text-break"><i class="bi bi-bus-front me-2"></i>${vehiculoTexto} · ${choferTexto}</h6>
+                            <button class="btn btn-sm btn-success poner-en-ruta-vehiculo mt-2 mt-md-0" data-vehiculo-id="${vId}">
                                 <i class="bi bi-truck me-1"></i> Poner en ruta
                             </button>
                         </div>
@@ -275,26 +296,28 @@
                     const destinoNombre = nombresPuntos[s.destino_id] || s.destino_id;
 
                     html += `
-                        <div class="border-bottom p-3 ps-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div><strong>${s.id}</strong> — <span class="badge badge-${s.estado}">${s.estado}</span><small class="ms-2 text-secondary">${origenNombre} → ${destinoNombre}</small></div>
+                        <div class="border-bottom p-3 ps-md-4 ps-2">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                                <div class="text-break"><strong>${s.id}</strong> — <span class="badge badge-${s.estado}">${s.estado}</span><small class="ms-2 text-secondary">${origenNombre} → ${destinoNombre}</small></div>
                             </div>
-                            <table class="table table-sm table-hover mb-0">
-                                <thead><tr><th>Asiento</th><th>Nombre</th><th>Carnet</th><th style="width:50px;">Chequeado</th><th style="width:80px;">Acción</th></tr></thead>
-                                <tbody>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead><tr><th>Asiento</th><th>Nombre</th><th>Carnet</th><th style="width:50px;">Chequeado</th><th style="width:80px;">Acción</th></tr></thead>
+                                    <tbody>
                     `;
                     g.pasajeros.forEach(p => {
                         html += `
                             <tr>
-                                <td>${p.numero_asiento}</td><td>${p.nombre}</td><td>${p.carnet}</td>
+                                <td>${p.numero_asiento}</td><td class="text-break">${p.nombre}</td><td>${p.carnet}</td>
                                 <td class="text-center"><input type="checkbox" class="form-check-input check-pasajero" data-id="${p.id}" ${p.chequeado ? 'checked' : ''}></td>
                                 <td><button class="btn btn-sm btn-outline-warning" onclick="abrirEditarPasajero(${p.id}, '${p.nombre.replace(/'/g, "\\'")}', '${p.carnet.replace(/'/g, "\\'")}')"><i class="bi bi-pencil"></i></button></td>
                             </tr>
                         `;
                     });
                     html += `
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     `;
                 });
@@ -323,70 +346,63 @@
         }
 
         // Función para poner en ruta todas las solicitudes de un vehículo (sin cambios)
-        
-		async function ponerEnRutaVehiculo(vId) {
-    const grupo = window.gruposPorVehiculo[vId];
-    if (!grupo) return;
+        async function ponerEnRutaVehiculo(vId) {
+            const grupo = window.gruposPorVehiculo[vId];
+            if (!grupo) return;
 
-    for (const g of grupo.solicitudes) {
-        const solicitudId = g.solicitud.id;
+            for (const g of grupo.solicitudes) {
+                const solicitudId = g.solicitud.id;
 
-        // 1. Eliminar pasajeros no chequeados
-        const idsNoChequeados = g.pasajeros.filter(p => !p.chequeado).map(p => p.id);
-        if (idsNoChequeados.length > 0) {
-            const { error: delError } = await window.supabaseClient
-                .from('pasajeros')
-                .delete()
-                .in('id', idsNoChequeados);
-            if (delError) {
-                console.error('Error al eliminar pasajeros no chequeados:', delError);
-                continue;  // Salta a la siguiente solicitud
+                const idsNoChequeados = g.pasajeros.filter(p => !p.chequeado).map(p => p.id);
+                if (idsNoChequeados.length > 0) {
+                    const { error: delError } = await window.supabaseClient
+                        .from('pasajeros')
+                        .delete()
+                        .in('id', idsNoChequeados);
+                    if (delError) {
+                        console.error('Error al eliminar pasajeros no chequeados:', delError);
+                        continue;
+                    }
+                }
+
+                const pasajerosRestantes = g.pasajeros.filter(p => p.chequeado).length;
+
+                const { data: solData, error: errSel } = await window.supabaseClient
+                    .from('solicitudes')
+                    .select('historial')
+                    .eq('id', solicitudId)
+                    .single();
+                if (errSel) {
+                    console.error('Error al obtener solicitud:', errSel);
+                    continue;
+                }
+
+                const historial = solData.historial || [];
+
+                if (pasajerosRestantes > 0) {
+                    historial.push({ estado: 'en_transito', fecha: new Date().toISOString(), usuario: 'admin' });
+                    const { error: updError } = await window.supabaseClient
+                        .from('solicitudes')
+                        .update({ estado: 'en_transito', historial })
+                        .eq('id', solicitudId);
+                    if (updError) {
+                        console.error('Error al poner en ruta:', updError);
+                    }
+                } else {
+                    historial.push({ estado: 'cancelada', fecha: new Date().toISOString(), usuario: 'admin (automático - sin pasajeros)' });
+                    const { error: cancelError } = await window.supabaseClient
+                        .from('solicitudes')
+                        .update({ estado: 'cancelada', historial })
+                        .eq('id', solicitudId);
+                    if (cancelError) {
+                        console.error('Error al cancelar solicitud vacía:', cancelError);
+                    }
+                }
             }
+
+            cargarDatos();
         }
 
-        // 2. Determinar si quedan pasajeros chequeados
-        const pasajerosRestantes = g.pasajeros.filter(p => p.chequeado).length;
-
-        // 3. Obtener historial actual
-        const { data: solData, error: errSel } = await window.supabaseClient
-            .from('solicitudes')
-            .select('historial')
-            .eq('id', solicitudId)
-            .single();
-        if (errSel) {
-            console.error('Error al obtener solicitud:', errSel);
-            continue;
-        }
-
-        const historial = solData.historial || [];
-
-        if (pasajerosRestantes > 0) {
-            // Poner en ruta
-            historial.push({ estado: 'en_transito', fecha: new Date().toISOString(), usuario: 'admin' });
-            const { error: updError } = await window.supabaseClient
-                .from('solicitudes')
-                .update({ estado: 'en_transito', historial })
-                .eq('id', solicitudId);
-            if (updError) {
-                console.error('Error al poner en ruta:', updError);
-            }
-        } else {
-            // Cancelar automáticamente (sin pasajeros)
-            historial.push({ estado: 'cancelada', fecha: new Date().toISOString(), usuario: 'admin (automático - sin pasajeros)' });
-            const { error: cancelError } = await window.supabaseClient
-                .from('solicitudes')
-                .update({ estado: 'cancelada', historial })
-                .eq('id', solicitudId);
-            if (cancelError) {
-                console.error('Error al cancelar solicitud vacía:', cancelError);
-            }
-        }
-    }
-
-    // Recargar la vista completamente
-    cargarDatos();
-}
-		
         // ---------- Modal "Poner en ruta" ----------
         document.addEventListener('DOMContentLoaded', () => {
             modalConfirmarRuta = new bootstrap.Modal(document.getElementById('modalConfirmarRuta'));
@@ -428,7 +444,6 @@
                 return;
             }
 
-            // Obtener datos del vehículo y chófer
             const { data: vehiculo, error: errVeh } = await window.supabaseClient
                 .from('vehiculos')
                 .select('tipo, placa, choferes(nombre, licencia)')
@@ -439,7 +454,6 @@
                 return;
             }
 
-            // Obtener solicitudes de esa fecha y vehículo (todas menos canceladas)
             const { data: solicitudes, error: errSol } = await window.supabaseClient
                 .from('solicitudes')
                 .select('id, fecha_viaje, origen_id, destino_id, estado')
@@ -449,7 +463,6 @@
 
             if (errSol) { alert('Error al cargar solicitudes.'); return; }
 
-            // Obtener pasajeros de esas solicitudes
             const idsSolicitudes = solicitudes.map(s => s.id);
             let pasajeros = [];
             if (idsSolicitudes.length > 0) {
@@ -460,19 +473,16 @@
                 if (!errPas) pasajeros = pas;
             }
 
-            // Ordenar pasajeros por número de asiento
             pasajeros.sort((a, b) => {
                 const numA = parseInt(a.numero_asiento) || 0;
                 const numB = parseInt(b.numero_asiento) || 0;
                 return numA - numB;
             });
 
-            // Obtener nombres de puntos para la ruta
             const { data: puntos } = await window.supabaseClient.from('puntos').select('id, nombre');
             const nombresPuntos = {};
             if (puntos) puntos.forEach(p => { nombresPuntos[p.id] = p.nombre || p.id; });
 
-            // Ruta: tomamos la primera solicitud como referencia
             let rutaTexto = '';
             if (solicitudes.length > 0) {
                 const primera = solicitudes[0];
