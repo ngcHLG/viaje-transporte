@@ -10,6 +10,42 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <link href="css/styles.css" rel="stylesheet">
+    <style>
+        /* ---------- Mejoras responsive para la página de Flota (≥280px) ---------- */
+        @media (max-width: 576px) {
+            /* Apilar botones de acción (editar/eliminar) en vertical */
+            .btn-accion-flota {
+                display: block;
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            /* Reducir padding de celdas para ganar espacio */
+            #tablaVehiculos td,
+            #tablaChoferes td {
+                padding: 0.5rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            /* Permitir que el texto del "próximo viaje" se parta */
+            #tablaVehiculos td small {
+                word-break: break-word;
+            }
+            /* Títulos de pestaña más compactos */
+            .nav-tabs .nav-link {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.85rem;
+            }
+        }
+        /* Botones dentro de modales en pantallas muy pequeñas */
+        @media (max-width: 400px) {
+            .modal-footer .btn {
+                width: 100%;
+                margin-bottom: 0.25rem;
+            }
+            .modal-footer {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 <body class="admin-body">
     <div id="sidebarContainer"></div>
@@ -32,7 +68,7 @@
         <div class="tab-content" id="flotaTabsContent">
             <!-- Vehículos -->
             <div class="tab-pane fade show active" id="vehiculos" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h5 class="mb-0">Lista de vehículos</h5>
                     <button class="btn btn-primary btn-sm" onclick="abrirModalVehiculo()">
                         <i class="bi bi-plus-lg me-1"></i> Nuevo vehículo
@@ -57,7 +93,7 @@
 
             <!-- Chóferes -->
             <div class="tab-pane fade" id="choferes" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <h5 class="mb-0">Lista de chóferes</h5>
                     <button class="btn btn-primary btn-sm" onclick="abrirModalChofer()">
                         <i class="bi bi-plus-lg me-1"></i> Nuevo chófer
@@ -93,19 +129,19 @@
                     <form id="formVehiculo">
                         <input type="hidden" id="vehiculoId">
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Placa</label>
                                 <input type="text" class="form-control" id="vehiculoPlaca" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Tipo</label>
                                 <input type="text" class="form-control" id="vehiculoTipo" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Capacidad (asientos)</label>
                                 <input type="number" class="form-control" id="vehiculoCapacidad" min="1" value="41" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Estado</label>
                                 <select class="form-select" id="vehiculoEstado">
                                     <option value="disponible">Disponible</option>
@@ -114,7 +150,7 @@
                                     <option value="fuera_servicio">Fuera de servicio</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Chófer asignado</label>
                                 <select class="form-select" id="vehiculoChofer">
                                     <option value="">Ninguno</option>
@@ -124,23 +160,23 @@
                         <hr>
                         <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2"></i>Próximo viaje planificado</h6>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Origen</label>
                                 <select class="form-select" id="viajeOrigen">
                                     <option value="">— Sin definir —</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Destino</label>
                                 <select class="form-select" id="viajeDestino">
                                     <option value="">— Sin definir —</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Fecha de salida</label>
                                 <input type="date" class="form-control" id="viajeFecha">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <label class="form-label">Hora de salida</label>
                                 <input type="time" class="form-control" id="viajeHora">
                             </div>
@@ -203,22 +239,17 @@
     <script>
         let vehiculosArray = [];
         let choferesArray = [];
-        let puntosLista = []; // Para llenar selectores de origen/destino
+        let puntosLista = [];
 
         const modalVehiculo = new bootstrap.Modal(document.getElementById('modalVehiculo'));
         const modalChofer = new bootstrap.Modal(document.getElementById('modalChofer'));
 
-        // Cargar puntos (para los selectores de origen/destino)
         async function cargarPuntos() {
             const { data, error } = await window.supabaseClient.from('puntos').select('id, nombre');
-            if (error) {
-                console.error('Error al cargar puntos:', error);
-                return;
-            }
+            if (error) { console.error('Error al cargar puntos:', error); return; }
             puntosLista = data;
         }
 
-        // Llenar selectores de origen/destino en el modal de vehículo
         function llenarSelectoresViaje() {
             const origenSelect = document.getElementById('viajeOrigen');
             const destinoSelect = document.getElementById('viajeDestino');
@@ -230,24 +261,16 @@
             });
         }
 
-        // Cargar vehículos
         async function cargarVehiculos() {
             const { data, error } = await window.supabaseClient.from('vehiculos').select('*, choferes(nombre, licencia)');
-            if (error) {
-                console.error('Error al cargar vehículos:', error);
-                return;
-            }
+            if (error) { console.error('Error al cargar vehículos:', error); return; }
             vehiculosArray = data;
             renderizarVehiculos();
         }
 
-        // Cargar chóferes
         async function cargarChoferes() {
             const { data, error } = await window.supabaseClient.from('choferes').select('*');
-            if (error) {
-                console.error('Error al cargar chóferes:', error);
-                return;
-            }
+            if (error) { console.error('Error al cargar chóferes:', error); return; }
             choferesArray = data;
             renderizarChoferes();
         }
@@ -267,7 +290,6 @@
                     'fuera_servicio': 'secondary'
                 }[v.estado] || 'secondary';
 
-                // Construir texto del próximo viaje planificado
                 let viajeTexto = '-';
                 if (v.origen_id && v.destino_id && v.fecha_salida) {
                     const fechaFormateada = new Date(v.fecha_salida + 'T00:00:00').toLocaleDateString('es-CU', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -283,8 +305,8 @@
                     <td><span class="badge bg-${estadoBadge}">${v.estado.replace('_', ' ')}</span></td>
                     <td><small>${viajeTexto}</small></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-info" onclick="editarVehiculo('${v.id}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarVehiculo('${v.id}')"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-sm btn-outline-info btn-accion-flota" onclick="editarVehiculo('${v.id}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-accion-flota" onclick="eliminarVehiculo('${v.id}')"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
                 `;
@@ -306,26 +328,24 @@
                     <td>${c.telefono || '-'}</td>
                     <td><span class="badge bg-${estadoBadge}">${c.estado}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-info" onclick="editarChofer(${c.id})"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarChofer(${c.id})"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-sm btn-outline-info btn-accion-flota" onclick="editarChofer(${c.id})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger btn-accion-flota" onclick="eliminarChofer(${c.id})"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
                 `;
             }).join('');
         }
 
-        // ---- Vehículos (con datos del viaje) ----
+        // ---- Vehículos ----
         window.abrirModalVehiculo = function(id = null) {
             document.getElementById('formVehiculo').reset();
             document.getElementById('vehiculoId').value = id || '';
             document.getElementById('modalVehiculoTitulo').innerHTML = id ? '<i class="bi bi-pencil me-2"></i>Editar vehículo' : '<i class="bi bi-plus-lg me-2"></i>Nuevo vehículo';
 
-            // Llenar selector de chóferes
             const selectChofer = document.getElementById('vehiculoChofer');
             selectChofer.innerHTML = '<option value="">Ninguno</option>' +
                 choferesArray.map(c => `<option value="${c.id}">${c.nombre} (${c.licencia})</option>`).join('');
 
-            // Llenar selectores de origen/destino
             llenarSelectoresViaje();
 
             if (id) {
@@ -357,10 +377,7 @@
             const fecha = document.getElementById('viajeFecha').value || null;
             const hora = document.getElementById('viajeHora').value || null;
 
-            if (!placa || !tipo) {
-                alert('Placa y tipo son obligatorios.');
-                return;
-            }
+            if (!placa || !tipo) { alert('Placa y tipo son obligatorios.'); return; }
 
             try {
                 if (id) {
@@ -386,31 +403,23 @@
             }
         };
 
-        window.editarVehiculo = function(id) {
-            abrirModalVehiculo(id);
-        };
+        window.editarVehiculo = function(id) { abrirModalVehiculo(id); };
 
         window.eliminarVehiculo = async function(id) {
             if (!confirm('¿Eliminar este vehículo? Esta acción no se puede deshacer.')) return;
             const { data: reservasActivas, error } = await window.supabaseClient.from('solicitudes')
                 .select('id').eq('vehiculo_id', id).in('estado', ['pendiente', 'confirmada', 'en_transito']);
-            if (error) {
-                alert('Error al verificar reservas: ' + error.message);
-                return;
-            }
+            if (error) { alert('Error al verificar reservas: ' + error.message); return; }
             if (reservasActivas && reservasActivas.length > 0) {
                 alert(`No se puede eliminar el vehículo porque tiene ${reservasActivas.length} reserva(s) activa(s).`);
                 return;
             }
             const { error: deleteError } = await window.supabaseClient.from('vehiculos').delete().eq('id', id);
-            if (deleteError) {
-                alert('Error al eliminar: ' + deleteError.message);
-                return;
-            }
+            if (deleteError) { alert('Error al eliminar: ' + deleteError.message); return; }
             cargarVehiculos();
         };
 
-        // ---- Chóferes (sin cambios) ----
+        // ---- Chóferes ----
         window.abrirModalChofer = function(id = null) {
             document.getElementById('formChofer').reset();
             document.getElementById('choferId').value = id || '';
@@ -435,10 +444,7 @@
             const telefono = document.getElementById('choferTelefono').value.trim();
             const estado = document.getElementById('choferEstado').value;
 
-            if (!nombre || !licencia) {
-                alert('Nombre y licencia son obligatorios.');
-                return;
-            }
+            if (!nombre || !licencia) { alert('Nombre y licencia son obligatorios.'); return; }
 
             try {
                 if (id) {
@@ -460,28 +466,20 @@
             }
         };
 
-        window.editarChofer = function(id) {
-            abrirModalChofer(id);
-        };
+        window.editarChofer = function(id) { abrirModalChofer(id); };
 
         window.eliminarChofer = async function(id) {
             if (!confirm('¿Eliminar este chófer?')) return;
             const { data: vehiculosAsignados, error } = await window.supabaseClient.from('vehiculos')
                 .select('id').eq('chofer_id', id);
-            if (error) {
-                alert('Error al verificar vehículos: ' + error.message);
-                return;
-            }
+            if (error) { alert('Error al verificar vehículos: ' + error.message); return; }
             if (vehiculosAsignados && vehiculosAsignados.length > 0) {
                 if (!confirm(`Este chófer está asignado a ${vehiculosAsignados.length} vehículo(s). Si lo eliminas, esos vehículos quedarán sin chófer asignado. ¿Continuar?`)) {
                     return;
                 }
             }
             const { error: deleteError } = await window.supabaseClient.from('choferes').delete().eq('id', id);
-            if (deleteError) {
-                alert('Error al eliminar: ' + deleteError.message);
-                return;
-            }
+            if (deleteError) { alert('Error al eliminar: ' + deleteError.message); return; }
             cargarChoferes();
             cargarVehiculos();
         };
