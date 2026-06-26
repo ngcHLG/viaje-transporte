@@ -240,3 +240,10 @@
         height: 0.9em;
     }
 }
+
+/* Ajuste fino del login en móviles pequeños */
+@media (max-width: 400px) {
+    .card.p-4 {
+        padding: 1rem !important;
+    }
+}
