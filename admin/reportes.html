@@ -16,6 +16,16 @@
         .barra-ocupacion { height: 24px; border-radius: 4px; background-color: #e9ecef; overflow: hidden; }
         .barra-ocupacion .ocupado { height: 100%; background-color: var(--rojo-pastel); float: left; }
         .barra-ocupacion .libre { height: 100%; background-color: var(--verde-disponible); float: left; }
+        
+        /* Pestañas con scroll horizontal si es necesario */
+        .nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .nav-tabs .nav-link {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="admin-body">
@@ -27,22 +37,22 @@
         <div class="card mb-4">
             <div class="card-body">
                 <div class="row g-2">
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <label class="form-label">Fecha desde</label>
                         <input type="date" id="filtroDesde" class="form-control">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <label class="form-label">Fecha hasta</label>
                         <input type="date" id="filtroHasta" class="form-control">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <label class="form-label">Origen</label>
                         <select id="filtroOrigenReporte" class="form-select">
                             <option value="">Todos</option>
                             <!-- Opciones cargadas dinámicamente desde el backend -->
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <label class="form-label">Destino</label>
                         <select id="filtroDestinoReporte" class="form-select">
                             <option value="">Todos</option>
@@ -233,12 +243,12 @@
             const enTransito = solicitudes.filter(r => r.estado === 'en_transito').length;
 
             document.getElementById('estadisticasViajes').innerHTML = `
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-info-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Total</p><h3 class="fw-bold">${total}</h3></div></div></div>
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-warning-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Pendientes</p><h3 class="fw-bold">${pendientes}</h3></div></div></div>
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-primary-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Confirmadas</p><h3 class="fw-bold">${confirmadas}</h3></div></div></div>
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">En tránsito</p><h3 class="fw-bold">${enTransito}</h3></div></div></div>
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Completadas</p><h3 class="fw-bold">${completadas}</h3></div></div></div>
-                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-danger-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Canceladas</p><h3 class="fw-bold">${canceladas}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-info-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Total</p><h3 class="fw-bold">${total}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-warning-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Pendientes</p><h3 class="fw-bold">${pendientes}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-primary-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Confirmadas</p><h3 class="fw-bold">${confirmadas}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">En tránsito</p><h3 class="fw-bold">${enTransito}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Completadas</p><h3 class="fw-bold">${completadas}</h3></div></div></div>
+                <div class="col-6 col-md-4 col-lg-2"><div class="card stat-card p-3 bg-danger-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Canceladas</p><h3 class="fw-bold">${canceladas}</h3></div></div></div>
             `;
 
             const totalCompCan = completadas + canceladas || 1;
