@@ -10,17 +10,53 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <link href="css/styles.css" rel="stylesheet">
+    <style>
+        /* Ajustes responsive para la tabla de reservas (≥280px) */
+        @media (max-width: 576px) {
+            /* Reducir fuente en la tabla */
+            #tablaReservas td,
+            #tablaReservas th {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.3rem;
+            }
+            /* Asegurar que los botones de acción no se desborden */
+            #tablaReservas .btn {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+            /* Paginación más compacta */
+            #paginacionContainer {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            #infoPagina {
+                font-size: 0.7rem;
+                width: 100%;
+                text-align: center;
+            }
+            #botonesPagina .btn {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+            /* Filtros a ancho completo */
+            .filtro-col {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
 </head>
 <body class="admin-body">
     <div id="sidebarContainer"></div>
     <main class="main-content">
         <h2 class="mb-4"><i class="bi bi-journal-text me-2"></i>Gestión de Reservas</h2>
 
-        <!-- Filtros (sin cambios) -->
+        <!-- Filtros (ahora responsivos) -->
         <div class="card mb-4">
             <div class="card-body">
                 <div class="row g-2">
-                    <div class="col-md-2 col-sm-4 col-6">
+                    <div class="col-12 col-sm-6 col-md-2 filtro-col">
                         <select id="filtroEstado" class="form-select">
                             <option value="">Todos los estados</option>
                             <option value="pendiente">Pendiente</option>
@@ -30,20 +66,20 @@
                             <option value="cancelada">Cancelada</option>
                         </select>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6">
+                    <div class="col-12 col-sm-6 col-md-2 filtro-col">
                         <input type="date" id="filtroFecha" class="form-control" placeholder="Fecha">
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6">
+                    <div class="col-12 col-sm-6 col-md-2 filtro-col">
                         <select id="filtroOrigen" class="form-select">
                             <option value="">Origen</option>
                         </select>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6">
+                    <div class="col-12 col-sm-6 col-md-2 filtro-col">
                         <select id="filtroDestino" class="form-select">
                             <option value="">Destino</option>
                         </select>
                     </div>
-                    <div class="col-md-4 col-sm-8 col-12">
+                    <div class="col-12 col-sm-8 col-md-4 filtro-col">
                         <input type="text" id="filtroTexto" class="form-control" placeholder="Buscar por código, cliente o email...">
                     </div>
                 </div>
@@ -217,7 +253,7 @@
                 };
             });
 
-            paginaActual = 1;  // Reiniciar paginación al cargar nuevos datos
+            paginaActual = 1;
             aplicarFiltros();
         }
 
@@ -242,7 +278,6 @@
                 return true;
             });
 
-            // Paginación
             const totalPaginas = Math.ceil(filtradas.length / REGISTROS_POR_PAGINA);
             if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
             const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
@@ -319,7 +354,6 @@
             });
             btnGroup.appendChild(btnAnterior);
 
-            // Botones de página (máximo 5 visibles)
             const maxBotones = 5;
             let inicioPag = Math.max(1, paginaActual - Math.floor(maxBotones / 2));
             let finPag = Math.min(totalPaginas, inicioPag + maxBotones - 1);
@@ -351,7 +385,6 @@
             btnGroup.appendChild(btnSiguiente);
         }
 
-        // Eventos de filtros (reiniciar página al cambiar)
         ['filtroEstado', 'filtroFecha', 'filtroOrigen', 'filtroDestino', 'filtroTexto'].forEach(id => {
             document.getElementById(id).addEventListener('input', () => {
                 paginaActual = 1;
@@ -359,7 +392,6 @@
             });
         });
 
-        // Ver detalle (sin cambios)
         window.verDetalle = function(id) {
             const r = todasLasSolicitudes.find(s => s.id === id);
             if (!r) return;
@@ -405,7 +437,6 @@
             new bootstrap.Modal(document.getElementById('modalDetalle')).show();
         };
 
-        // Cambiar estado (con cancelación automática de conflictos)
         window.cambiarEstado = async function(id, nuevoEstado) {
             const r = todasLasSolicitudes.find(s => s.id === id);
             if (!r) return;
@@ -453,7 +484,6 @@
             await cargarSolicitudes();
         };
 
-        // Abrir modal para modificar vehículo (sin cambios)
         window.abrirModificar = function(id) {
             reservaEnEdicion = todasLasSolicitudes.find(s => s.id === id);
             if (!reservaEnEdicion) return;
@@ -468,7 +498,6 @@
             new bootstrap.Modal(document.getElementById('modalModificar')).show();
         };
 
-        // Guardar modificación de vehículo (sin cambios)
         document.getElementById('btnGuardarModificacion').addEventListener('click', async function() {
             if (!reservaEnEdicion) return;
             const nuevoVehiculoId = document.getElementById('modVehiculo').value;
@@ -504,7 +533,6 @@
             await cargarSolicitudes();
         });
 
-        // Inicializar página
         document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([cargarPuntos(), cargarVehiculos()]);
             cargarSolicitudes();
