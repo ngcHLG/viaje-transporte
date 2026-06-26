@@ -1,0 +1,264 @@
+﻿:root {
+    --azul-pastel: #7AA5CC;
+    --azul-pastel-hover: #5C8BB5;
+    --rojo-pastel: #E78F8F;
+    --rojo-pastel-hover: #D97676;
+    --fondo-claro: #F8F9FA;
+    --gris-azulado: #E9F0F6;
+    --texto-principal: #2C3E50;
+    --texto-secundario: #6C757D;
+    --verde-disponible: #B8D9C0;
+    --azul-seleccionado: #A8C4E2;
+}
+
+body {
+    background-color: var(--fondo-claro);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--texto-principal);
+}
+
+/* Navbar */
+#mainNavbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    color: var(--azul-pastel) !important;
+}
+
+/* Botones */
+.btn-primary {
+    background-color: var(--azul-pastel);
+    border-color: var(--azul-pastel);
+    color: white;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--azul-pastel-hover);
+    border-color: var(--azul-pastel-hover);
+}
+.btn-danger {
+    background-color: var(--rojo-pastel);
+    border-color: var(--rojo-pastel);
+    color: white;
+}
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: var(--rojo-pastel-hover);
+    border-color: var(--rojo-pastel-hover);
+}
+
+/* Tarjetas */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background-color: white;
+}
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-weight: 600;
+}
+
+/* Indicador de pasos */
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.step-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    transition: background-color 0.3s;
+}
+.step-dot.active {
+    background-color: var(--azul-pastel);
+}
+.step-dot.completed {
+    background-color: var(--verde-disponible);
+}
+
+/* Asientos */
+.bus-seat {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    background-color: var(--verde-disponible);
+    color: #155724;
+}
+.bus-seat.occupied {
+    background-color: var(--rojo-pastel);
+    color: #721c24;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.bus-seat.selected {
+    background-color: var(--azul-seleccionado);
+    border-color: var(--azul-pastel);
+    color: #0c5460;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(122,165,204,0.4);
+}
+.bus-seat:not(.occupied):hover {
+    background-color: #CDE2F0;
+    border-color: var(--azul-pastel);
+}
+.bus-seat.conductor {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: default;
+}
+.bus-seat.conductor:hover {
+    background-color: #e9ecef;
+    border-color: transparent;
+}
+
+/* Asiento pendiente de confirmación */
+.bus-seat.pending {
+    background-color: #FFE08A;
+    color: #856404;
+    cursor: pointer;
+}
+.bus-seat.pending:hover {
+    background-color: #F7D44A;
+    border-color: #F0C040;
+}
+
+/* Pasillo */
+.bus-aisle {
+    width: 30px;
+}
+
+/* Imágenes de ubicación */
+.location-img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    background-color: var(--gris-azulado);
+}
+
+/* Etiqueta de precio */
+.price-badge {
+    background-color: var(--azul-pastel);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Footer pegajoso */
+.footer-nav {
+    background-color: white;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding: 0.75rem 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 1020;
+}
+
+/* Tarjetas de viaje */
+.viaje-card {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.viaje-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Ajustes responsivos para tarjetas de vehículo */
+@media (max-width: 576px) {
+    .viaje-card .card-body {
+        padding: 1rem;
+    }
+    .viaje-card .info-vehiculo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .viaje-card .info-vehiculo .badge {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Modo oscuro */
+[data-bs-theme="dark"] body {
+    background-color: #212529;
+}
+[data-bs-theme="dark"] #mainNavbar {
+    background-color: #2B3544 !important;
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+[data-bs-theme="dark"] .navbar-brand {
+    color: #EAEAEA !important;
+}
+[data-bs-theme="dark"] .card {
+    background-color: #2B3544;
+    color: #EAEAEA;
+}
+[data-bs-theme="dark"] .footer-nav {
+    background-color: #2B3544;
+    border-top-color: rgba(255,255,255,0.1);
+}
+[data-bs-theme="dark"] .bus-seat.conductor {
+    background-color: #495057;
+    color: #adb5bd;
+}
+[data-bs-theme="dark"] .price-badge {
+    background-color: var(--azul-pastel);
+    color: #fff;
+}
+[data-bs-theme="dark"] .bg-light {
+    background-color: #343a40 !important;
+}
+[data-bs-theme="dark"] .text-secondary {
+    color: #adb5bd !important;
+}
+
+/* Badges de estado (para consulta.html y donde se necesiten) */
+.badge-pendiente {
+    background-color: #FFE08A;
+    color: #856404;
+}
+.badge-confirmada {
+    background-color: #A8C4E2;
+    color: #0c5460;
+}
+.badge-en_transito {
+    background-color: #B8D9C0;
+    color: #155724;
+}
+.badge-completada {
+    background-color: #C4E4F5;
+    color: #0c5460;
+}
+.badge-cancelada {
+    background-color: var(--rojo-pastel, #E78F8F);
+    color: #721c24;
+}
+/* Asegurar que el badge de Bootstrap no herede estilos que lo oculten */
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+}

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Administración</title>
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <style>
+        #contenedorEmbarque .table thead th {
+            background-color: var(--gris-azulado);
+            color: var(--texto-principal);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        [data-bs-theme="dark"] #contenedorEmbarque .table thead th {
+            background-color: #3a4755;
+            color: #EAEAEA;
+        }
+    </style>
+</head>
+<body class="admin-body">
+    <div id="sidebarContainer"></div>
+    <main class="main-content">
+        <h2 class="mb-4"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+
+        <!-- Tarjetas de estadísticas -->
+        <div class="row g-3 justify-content-center mb-4">
+            <div class="col-lg-3 col-md-6 col-6">
+                <div class="card stat-card p-3 bg-warning-subtle h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 text-secondary small">Pendientes</p><h3 class="fw-bold" id="countPendientes">0</h3></div>
+                        <i class="bi bi-hourglass-split icon text-warning"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-6">
+                <div class="card stat-card p-3 bg-info-subtle h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 text-secondary small">Confirmadas hoy</p><h3 class="fw-bold" id="countConfirmadas">0</h3></div>
+                        <i class="bi bi-check-circle icon text-info"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-6">
+                <div class="card stat-card p-3 bg-success-subtle h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 text-secondary small">En tránsito</p><h3 class="fw-bold" id="countEnTransito">0</h3></div>
+                        <i class="bi bi-truck icon text-success"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 col-6">
+                <div class="card stat-card p-3 bg-danger-subtle h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><p class="mb-1 text-secondary small">Canceladas</p><h3 class="fw-bold" id="countCanceladas">0</h3></div>
+                        <i class="bi bi-x-circle icon text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control de embarque del día -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check me-2"></i>Control de embarque - Salidas de hoy</h5>
+                <button class="btn btn-sm btn-outline-secondary" id="btnAbrirModalManifiesto">
+                    <i class="bi bi-printer me-1"></i> Imprimir Manifiesto
+                </button>
+            </div>
+            <div class="card-body p-0" id="contenedorEmbarque">
+                <p class="text-center text-secondary p-3">Cargando pasajeros...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para editar pasajero (reemplazo) -->
+    <div class="modal fade" id="modalEditarPasajero" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Reemplazar pasajero</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarPasajero">
+                        <input type="hidden" id="editPasajeroId">
+                        <div class="mb-3"><label class="form-label">Nuevo nombre y apellidos</label><input type="text" class="form-control" id="editNombre" required></div>
+                        <div class="mb-3"><label class="form-label">Nuevo carnet de identidad</label><input type="text" class="form-control" id="editCarnet" required></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarEdicionPasajero()">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación "Poner en ruta" -->
+    <div class="modal fade" id="modalConfirmarRuta" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-truck me-2"></i>Confirmar salida</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Poner en ruta todos los pasajeros chequeados de este vehículo?</p>
+                    <p class="text-secondary small">Los pasajeros no chequeados serán cancelados automáticamente.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success" id="btnConfirmarRuta">Poner en ruta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para seleccionar fecha y vehículo para imprimir manifiesto -->
+    <div class="modal fade" id="modalSeleccionManifiesto" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-printer me-2"></i>Imprimir Manifiesto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" id="manifiestoFecha" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vehículo</label>
+                        <select id="manifiestoVehiculo" class="form-select" required>
+                            <option value="">Selecciona un vehículo...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" id="btnGenerarManifiesto">Generar Manifiesto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        const hoy = new Date().toLocaleDateString('sv-SE');
+        let puntosLista = [];
+        let vehiculoPendienteRuta = null;
+        let modalConfirmarRuta = null;
+        let modalSeleccionManifiesto = null;
+        window.gruposPorVehiculo = {};
+
+        async function cargarPuntos() {
+            const { data, error } = await window.supabaseClient.from('puntos').select('id, nombre');
+            if (error) return;
+            puntosLista = data;
+        }
+
+        async function cargarVehiculos() {
+            const { data, error } = await window.supabaseClient.from('vehiculos').select('id, tipo, placa');
+            if (error) return;
+            const select = document.getElementById('manifiestoVehiculo');
+            select.innerHTML = '<option value="">Selecciona un vehículo...</option>';
+            data.forEach(v => {
+                select.innerHTML += `<option value="${v.id}">${v.tipo} (${v.placa})</option>`;
+            });
+        }
+
+        async function cargarDatos() {
+            // 1. Estadísticas
+            const [
+                { count: pendientes },
+                { count: confirmadasHoy },
+                { count: enTransito },
+                { count: canceladas }
+            ] = await Promise.all([
+                window.supabaseClient.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+                window.supabaseClient.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'confirmada').eq('fecha_viaje', hoy),
+                window.supabaseClient.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'en_transito'),
+                window.supabaseClient.from('solicitudes').select('*', { count: 'exact', head: true }).eq('estado', 'cancelada')
+            ]);
+            document.getElementById('countPendientes').textContent = pendientes;
+            document.getElementById('countConfirmadas').textContent = confirmadasHoy;
+            document.getElementById('countEnTransito').textContent = enTransito;
+            document.getElementById('countCanceladas').textContent = canceladas;
+
+            // 2. Solicitudes pendientes o confirmadas del día
+            const { data: solicitudes, error: errSol } = await window.supabaseClient
+                .from('solicitudes')
+                .select('id, fecha_viaje, origen_id, destino_id, estado, vehiculo_id')
+                .eq('fecha_viaje', hoy)
+                .in('estado', ['pendiente', 'confirmada']);
+
+            if (errSol || !solicitudes || solicitudes.length === 0) {
+                document.getElementById('contenedorEmbarque').innerHTML = '<p class="text-center text-secondary p-3">No hay salidas programadas para hoy.</p>';
+                window.gruposPorVehiculo = {};
+                return;
+            }
+
+            // 3. Obtener pasajeros de esas solicitudes
+            const idsSolicitudes = solicitudes.map(s => s.id);
+            const { data: pasajeros } = await window.supabaseClient
+                .from('pasajeros')
+                .select('*')
+                .in('solicitud_id', idsSolicitudes);
+
+            // 4. Datos de vehículos y chóferes
+            const idsVehiculos = [...new Set(solicitudes.map(s => s.vehiculo_id).filter(Boolean))];
+            let vehiculosInfo = {};
+            if (idsVehiculos.length > 0) {
+                const { data: vehiculos } = await window.supabaseClient
+                    .from('vehiculos')
+                    .select('id, placa, tipo, choferes(nombre, licencia)')
+                    .in('id', idsVehiculos);
+                (vehiculos || []).forEach(v => { vehiculosInfo[v.id] = v; });
+            }
+
+            const nombresPuntos = {};
+            puntosLista.forEach(p => { nombresPuntos[p.id] = p.nombre || p.id; });
+
+            // Agrupar solicitudes por vehículo
+            const gruposPorVehiculo = {};
+            solicitudes.forEach(s => {
+                const vId = s.vehiculo_id || 'sin_vehiculo';
+                if (!gruposPorVehiculo[vId]) {
+                    gruposPorVehiculo[vId] = {
+                        vehiculo: vehiculosInfo[s.vehiculo_id] || {},
+                        solicitudes: []
+                    };
+                }
+                const pasajerosDeSolicitud = (pasajeros || []).filter(p => p.solicitud_id === s.id);
+                const todosChequeados = pasajerosDeSolicitud.length > 0 && pasajerosDeSolicitud.every(p => p.chequeado);
+                gruposPorVehiculo[vId].solicitudes.push({
+                    solicitud: s,
+                    pasajeros: pasajerosDeSolicitud,
+                    todosChequeados
+                });
+            });
+
+            window.gruposPorVehiculo = gruposPorVehiculo;
+
+            // Renderizar agrupado por vehículo (con botón "Poner en ruta" único para el vehículo)
+            let html = '';
+            for (const [vId, grupo] of Object.entries(gruposPorVehiculo)) {
+                const v = grupo.vehiculo;
+                const vehiculoTexto = v.placa ? `${v.tipo || ''} (${v.placa})` : (vId === 'sin_vehiculo' ? 'Sin vehículo asignado' : vId);
+                const choferTexto = v.choferes ? `${v.choferes.nombre} (Lic. ${v.choferes.licencia || ''})` : '-';
+
+                html += `
+                    <div class="bg-light p-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="bi bi-bus-front me-2"></i>${vehiculoTexto} · ${choferTexto}</h6>
+                            <button class="btn btn-sm btn-success poner-en-ruta-vehiculo" data-vehiculo-id="${vId}">
+                                <i class="bi bi-truck me-1"></i> Poner en ruta
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Solicitudes dentro de este vehículo (sin botón individual de poner en ruta)
+                grupo.solicitudes.forEach(g => {
+                    const s = g.solicitud;
+                    const origenNombre = nombresPuntos[s.origen_id] || s.origen_id;
+                    const destinoNombre = nombresPuntos[s.destino_id] || s.destino_id;
+
+                    html += `
+                        <div class="border-bottom p-3 ps-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div><strong>${s.id}</strong> — <span class="badge badge-${s.estado}">${s.estado}</span><small class="ms-2 text-secondary">${origenNombre} → ${destinoNombre}</small></div>
+                            </div>
+                            <table class="table table-sm table-hover mb-0">
+                                <thead><tr><th>Asiento</th><th>Nombre</th><th>Carnet</th><th style="width:50px;">Chequeado</th><th style="width:80px;">Acción</th></tr></thead>
+                                <tbody>
+                    `;
+                    g.pasajeros.forEach(p => {
+                        html += `
+                            <tr>
+                                <td>${p.numero_asiento}</td><td>${p.nombre}</td><td>${p.carnet}</td>
+                                <td class="text-center"><input type="checkbox" class="form-check-input check-pasajero" data-id="${p.id}" ${p.chequeado ? 'checked' : ''}></td>
+                                <td><button class="btn btn-sm btn-outline-warning" onclick="abrirEditarPasajero(${p.id}, '${p.nombre.replace(/'/g, "\\'")}', '${p.carnet.replace(/'/g, "\\'")}')"><i class="bi bi-pencil"></i></button></td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('contenedorEmbarque').innerHTML = html;
+
+            // Checkboxes (sin cambios)
+            document.querySelectorAll('.check-pasajero').forEach(checkbox => {
+                checkbox.addEventListener('change', async function() {
+                    const pasajeroId = this.dataset.id;
+                    const chequeado = this.checked;
+                    const { error } = await window.supabaseClient.from('pasajeros').update({ chequeado }).eq('id', pasajeroId);
+                    if (error) { alert('Error: ' + error.message); this.checked = !chequeado; }
+                    else { cargarDatos(); }
+                });
+            });
+
+            // Botones "Poner en ruta" por vehículo
+            document.querySelectorAll('.poner-en-ruta-vehiculo').forEach(boton => {
+                boton.addEventListener('click', function() {
+                    vehiculoPendienteRuta = this.dataset.vehiculoId;
+                    modalConfirmarRuta.show();
+                });
+            });
+        }
+
+        // Función para poner en ruta todas las solicitudes de un vehículo (sin cambios)
+        
+		async function ponerEnRutaVehiculo(vId) {
+    const grupo = window.gruposPorVehiculo[vId];
+    if (!grupo) return;
+
+    for (const g of grupo.solicitudes) {
+        const solicitudId = g.solicitud.id;
+
+        // 1. Eliminar pasajeros no chequeados
+        const idsNoChequeados = g.pasajeros.filter(p => !p.chequeado).map(p => p.id);
+        if (idsNoChequeados.length > 0) {
+            const { error: delError } = await window.supabaseClient
+                .from('pasajeros')
+                .delete()
+                .in('id', idsNoChequeados);
+            if (delError) {
+                console.error('Error al eliminar pasajeros no chequeados:', delError);
+                continue;  // Salta a la siguiente solicitud
+            }
+        }
+
+        // 2. Determinar si quedan pasajeros chequeados
+        const pasajerosRestantes = g.pasajeros.filter(p => p.chequeado).length;
+
+        // 3. Obtener historial actual
+        const { data: solData, error: errSel } = await window.supabaseClient
+            .from('solicitudes')
+            .select('historial')
+            .eq('id', solicitudId)
+            .single();
+        if (errSel) {
+            console.error('Error al obtener solicitud:', errSel);
+            continue;
+        }
+
+        const historial = solData.historial || [];
+
+        if (pasajerosRestantes > 0) {
+            // Poner en ruta
+            historial.push({ estado: 'en_transito', fecha: new Date().toISOString(), usuario: 'admin' });
+            const { error: updError } = await window.supabaseClient
+                .from('solicitudes')
+                .update({ estado: 'en_transito', historial })
+                .eq('id', solicitudId);
+            if (updError) {
+                console.error('Error al poner en ruta:', updError);
+            }
+        } else {
+            // Cancelar automáticamente (sin pasajeros)
+            historial.push({ estado: 'cancelada', fecha: new Date().toISOString(), usuario: 'admin (automático - sin pasajeros)' });
+            const { error: cancelError } = await window.supabaseClient
+                .from('solicitudes')
+                .update({ estado: 'cancelada', historial })
+                .eq('id', solicitudId);
+            if (cancelError) {
+                console.error('Error al cancelar solicitud vacía:', cancelError);
+            }
+        }
+    }
+
+    // Recargar la vista completamente
+    cargarDatos();
+}
+		
+        // ---------- Modal "Poner en ruta" ----------
+        document.addEventListener('DOMContentLoaded', () => {
+            modalConfirmarRuta = new bootstrap.Modal(document.getElementById('modalConfirmarRuta'));
+            document.getElementById('btnConfirmarRuta').addEventListener('click', async () => {
+                if (vehiculoPendienteRuta) {
+                    await ponerEnRutaVehiculo(vehiculoPendienteRuta);
+                    modalConfirmarRuta.hide();
+                }
+            });
+        });
+
+        // Funciones de edición de pasajero (sin cambios)
+        window.abrirEditarPasajero = function(id, nombre, carnet) {
+            document.getElementById('editPasajeroId').value = id;
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editCarnet').value = carnet;
+            new bootstrap.Modal(document.getElementById('modalEditarPasajero')).show();
+        };
+
+        window.guardarEdicionPasajero = async function() {
+            const id = document.getElementById('editPasajeroId').value;
+            const nombre = document.getElementById('editNombre').value.trim();
+            const carnet = document.getElementById('editCarnet').value.trim();
+            if (!nombre || !carnet) { alert('Nombre y carnet son obligatorios.'); return; }
+            const { error } = await window.supabaseClient.from('pasajeros').update({ nombre, carnet }).eq('id', id);
+            if (error) { alert('Error al guardar: ' + error.message); }
+            else {
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarPasajero')).hide();
+                cargarDatos();
+            }
+        };
+
+        // ---------- Modal y lógica para imprimir manifiesto por fecha y vehículo ----------
+        async function generarManifiesto() {
+            const fecha = document.getElementById('manifiestoFecha').value;
+            const vehiculoId = document.getElementById('manifiestoVehiculo').value;
+            if (!fecha || !vehiculoId) {
+                alert('Debe seleccionar fecha y vehículo.');
+                return;
+            }
+
+            // Obtener datos del vehículo y chófer
+            const { data: vehiculo, error: errVeh } = await window.supabaseClient
+                .from('vehiculos')
+                .select('tipo, placa, choferes(nombre, licencia)')
+                .eq('id', vehiculoId)
+                .single();
+            if (errVeh || !vehiculo) {
+                alert('Vehículo no encontrado.');
+                return;
+            }
+
+            // Obtener solicitudes de esa fecha y vehículo (todas menos canceladas)
+            const { data: solicitudes, error: errSol } = await window.supabaseClient
+                .from('solicitudes')
+                .select('id, fecha_viaje, origen_id, destino_id, estado')
+                .eq('fecha_viaje', fecha)
+                .eq('vehiculo_id', vehiculoId)
+                .neq('estado', 'cancelada');
+
+            if (errSol) { alert('Error al cargar solicitudes.'); return; }
+
+            // Obtener pasajeros de esas solicitudes
+            const idsSolicitudes = solicitudes.map(s => s.id);
+            let pasajeros = [];
+            if (idsSolicitudes.length > 0) {
+                const { data: pas, error: errPas } = await window.supabaseClient
+                    .from('pasajeros')
+                    .select('solicitud_id, numero_asiento, nombre, carnet')
+                    .in('solicitud_id', idsSolicitudes);
+                if (!errPas) pasajeros = pas;
+            }
+
+            // Ordenar pasajeros por número de asiento
+            pasajeros.sort((a, b) => {
+                const numA = parseInt(a.numero_asiento) || 0;
+                const numB = parseInt(b.numero_asiento) || 0;
+                return numA - numB;
+            });
+
+            // Obtener nombres de puntos para la ruta
+            const { data: puntos } = await window.supabaseClient.from('puntos').select('id, nombre');
+            const nombresPuntos = {};
+            if (puntos) puntos.forEach(p => { nombresPuntos[p.id] = p.nombre || p.id; });
+
+            // Ruta: tomamos la primera solicitud como referencia
+            let rutaTexto = '';
+            if (solicitudes.length > 0) {
+                const primera = solicitudes[0];
+                const origenNombre = nombresPuntos[primera.origen_id] || primera.origen_id;
+                const destinoNombre = nombresPuntos[primera.destino_id] || primera.destino_id;
+                rutaTexto = `${origenNombre} → ${destinoNombre}`;
+            }
+
+            const vehiculoTexto = `${vehiculo.tipo} (${vehiculo.placa})`;
+            const choferNombre = vehiculo.choferes ? vehiculo.choferes.nombre : 'Sin asignar';
+            const choferLicencia = vehiculo.choferes ? vehiculo.choferes.licencia : '';
+            const fechaFormateada = new Date(fecha + 'T00:00:00').toLocaleDateString('es-CU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let filas = pasajeros.length === 0
+                ? '<tr><td colspan="4" style="text-align: center; font-style: italic;">Sin pasajeros registrados</td></tr>'
+                : pasajeros.map(p => `<tr><td>${p.numero_asiento}</td><td>${p.nombre}</td><td>${p.carnet}</td><td></td></tr>`).join('');
+
+            const ventana = window.open('', '_blank', 'width=900,height=700');
+            ventana.document.write(`
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title> </title>
+                    <style>
+                        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 1.5cm 1.5cm; color: #000; }
+                        .header { text-align: center; margin-bottom: 20px; }
+                        .logo { font-size: 26px; font-weight: bold; color: #7AA5CC; }
+                        h2 { margin: 5px 0; font-size: 22px; }
+                        .info-vehiculo { margin-bottom: 15px; font-size: 14px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+                        th { background-color: #E9F0F6; font-weight: 600; padding: 8px; border: 1px solid #ccc; }
+                        td { padding: 6px 8px; border: 1px solid #ccc; vertical-align: top; }
+                        .firma { margin-top: 50px; }
+                        .firma div { text-align: center; margin-bottom: 30px; }
+                        .linea { border-top: 1px solid #000; margin-top: 0; margin-bottom: 5px; width: 60%; margin-left: auto; margin-right: auto; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo"><i class="bi bi-bus-front-fill"></i> Viajes Transporte</div>
+                        <h2>Manifiesto de Viaje</h2>
+                        <p>${fechaFormateada}</p>
+                    </div>
+                    <div class="info-vehiculo">
+                        <strong>Vehículo:</strong> ${vehiculoTexto}<br>
+                        <strong>Chófer:</strong> ${choferNombre} (Lic. ${choferLicencia})<br>
+                        <strong>Ruta:</strong> ${rutaTexto}
+                    </div>
+                    <table>
+                        <thead><tr><th>Asiento</th><th>Nombre y apellidos</th><th>Carnet de Identidad</th><th>Firma</th></tr></thead>
+                        <tbody>${filas}</tbody>
+                    </table>
+                    <div class="firma">
+                        <div><div class="linea"></div>Firma del chófer</div>
+                        <div><div class="linea"></div>Firma del administrador</div>
+                    </div>
+                    <script>window.onload = function() { window.print(); };<\/script>
+                </body>
+                </html>
+            `);
+            ventana.document.close();
+            modalSeleccionManifiesto.hide();
+        }
+
+        // Configurar modal de selección de manifiesto
+        document.addEventListener('DOMContentLoaded', () => {
+            modalSeleccionManifiesto = new bootstrap.Modal(document.getElementById('modalSeleccionManifiesto'));
+            document.getElementById('manifiestoFecha').value = hoy;
+            cargarVehiculos();
+            document.getElementById('btnAbrirModalManifiesto').addEventListener('click', () => {
+                modalSeleccionManifiesto.show();
+            });
+            document.getElementById('btnGenerarManifiesto').addEventListener('click', generarManifiesto);
+        });
+
+        // Inicio
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarPuntos();
+            cargarDatos();
+        });
+    </script>
+</body>
+</html>

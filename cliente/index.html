@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viajes Transporte - Reserva tu viaje</title>
+    <!-- Bootstrap 5 CSS -->
+    <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">-->
+	
+    <!--Para manejo local, si Bootstrap 5 server falla-->
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css" rel="stylesheet">-->
+
+    <!--Para manejo local, si Bootstrap 5 server falla-->
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <link href="styles.css" rel="stylesheet">
+	
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top shadow-sm" id="mainNavbar">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bus-front-fill me-2"></i>Viajes Transporte
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" id="btnMisViajes">
+                    <i class="bi bi-archive me-1"></i>Mis viajes
+                </button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" id="btnAyuda">
+                    <i class="bi bi-telephone me-1"></i>Ayuda
+                </button>
+                <button class="btn btn-outline-secondary btn-sm rounded-pill" id="btnModoOscuro" title="Cambiar modo">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="container py-4" style="max-width: 540px;">
+
+        <!-- Indicador de pasos -->
+        <div class="step-indicator px-3" id="stepIndicator">
+            <span class="step-dot active" data-step="1"></span>
+            <span class="step-dot" data-step="2"></span>
+            <span class="step-dot" data-step="3"></span>
+            <span class="step-dot" data-step="4"></span>
+        </div>
+
+        <!-- Paso 1: Selección de fecha -->
+        <section id="step1" class="step-content">
+            <div class="card p-3 mb-3">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar3 display-4" style="color: var(--azul-pastel);"></i>
+                    <h5 class="card-title mt-3">Elige la fecha de tu viaje</h5>
+                    <p class="text-secondary">Selecciona el día en que deseas viajar</p>
+                    <input type="date" id="fechaViaje" class="form-control form-control-lg text-center" style="max-width: 250px; margin: 0 auto;">
+                    <button class="btn btn-primary btn-lg w-100 mt-3" id="btnBuscarFecha" disabled>
+                        <i class="bi bi-search me-2"></i>Buscar viajes
+                    </button>
+                    <div id="fechaSinViajes" class="alert alert-warning mt-3 d-none">
+                        <i class="bi bi-calendar-x me-2"></i>No hay salidas programadas para esta fecha.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Paso 2: Selección de origen y destino -->
+        <section id="step2" class="step-content d-none">
+            <div class="card p-3 mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-geo-alt-fill me-2" style="color: var(--azul-pastel);"></i>Origen y Destino</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Origen</label>
+                        <select id="selectOrigen" class="form-select form-select-lg">
+                            <!-- Opciones cargadas dinámicamente desde el backend -->
+                        </select>
+                        <div id="imagenOrigenContainer" class="mt-2 d-none">
+                            <img id="imagenOrigen" src="" alt="Punto de recogida" class="location-img">
+                            <p class="text-secondary mt-1 small"><i class="bi bi-pin-map me-1"></i><span id="direccionOrigen"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Destino</label>
+                        <select id="selectDestino" class="form-select form-select-lg">
+                            <!-- Opciones cargadas dinámicamente desde el backend -->
+                        </select>
+                        <div id="imagenDestinoContainer" class="mt-2 d-none">
+                            <img id="imagenDestino" src="" alt="Punto de llegada" class="location-img">
+                            <p class="text-secondary mt-1 small"><i class="bi bi-pin-map me-1"></i><span id="direccionDestino"></span></p>
+                        </div>
+                    </div>
+                    <div id="precioReferenciaContainer" class="text-center mt-3 d-none">
+                        <span class="price-badge fs-6"><span id="precioReferenciaTexto"></span></span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg w-100 mb-2 d-none" id="btnConfirmarRuta" disabled>
+                <i class="bi bi-search me-2"></i>Buscar viajes
+            </button>
+            <button class="btn btn-outline-secondary w-100 mb-2" id="btnVolverPaso1">
+                <i class="bi bi-arrow-left me-2"></i>Cambiar fecha
+            </button>
+        </section>
+
+        <!-- Paso 3: Selección de viaje y asientos -->
+        <section id="step3" class="step-content d-none">
+            <div class="card p-3 mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-bus-front me-2" style="color: var(--azul-pastel);"></i>Viajes disponibles</h5>
+                    <div id="listaViajes" class="row g-3">
+                        <!-- Las tarjetas de viaje se generan dinámicamente -->
+                    </div>
+                    <div id="sinViajesDisponibles" class="alert alert-info d-none mt-3">
+                        <i class="bi bi-info-circle me-2"></i>No hay viajes para esta ruta en la fecha seleccionada.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 mb-3 d-none" id="asientosCard">
+                <div class="card-body">
+                    <h6 class="mb-3 text-center"><i class="bi bi-grid-3x3-gap me-2"></i>Selecciona tus asientos</h6>
+                    <div class="mb-3 text-center">
+                        <label class="form-label d-block">Número de pasajeros</label>
+                        <div class="d-flex justify-content-center">
+                            <div class="input-group" style="max-width: 180px;">
+                                <button class="btn btn-outline-secondary" type="button" id="btnMenosPasajeros"><i class="bi bi-dash"></i></button>
+                                <input type="number" id="numPasajeros" class="form-control text-center" value="1" min="1" max="1" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="btnMasPasajeros"><i class="bi bi-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Representación del ómnibus -->
+                    <div class="d-flex justify-content-center mb-2">
+                        <i class="bi bi-bus-front-fill display-4" style="color: var(--azul-pastel);"></i>
+                    </div>
+                    <div id="busLayout" class="d-flex justify-content-center">
+                        <!-- Asientos generados dinámicamente -->
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-square-fill me-1"></i>Disponible</span>
+                        <span class="badge bg-warning-subtle text-warning"><i class="bi bi-square-fill me-1"></i>Pendiente</span>
+                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-square-fill me-1"></i>Ocupado</span>
+                        <span class="badge bg-info-subtle text-info"><i class="bi bi-square-fill me-1"></i>Seleccionado</span>
+                    </div>
+                    <div id="resumenSeleccion" class="mt-3 d-none text-center">
+                        <p><span id="asientosSeleccionadosTexto"></span></p>
+                        <p><strong>Total a pagar: <span id="totalPagar"></span></strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-outline-secondary w-100 mb-2" id="btnVolverPaso2">
+                <i class="bi bi-arrow-left me-2"></i>Cambiar ruta
+            </button>
+        </section>
+
+        <!-- Paso 4: Resumen y datos del cliente -->
+        <section id="step4" class="step-content d-none">
+            <div class="card p-3 mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-check2-circle me-2" style="color: var(--verde-disponible);"></i>Confirma tu solicitud</h5>
+                    <div id="resumenFinal" class="mb-4 p-3 bg-light rounded-3">
+                        <!-- Rellenado por JS -->
+                    </div>
+                    <form id="formCliente" novalidate>
+                        <!-- Datos del solicitante -->
+                        <h6 class="fw-bold mb-3"><i class="bi bi-person-fill me-2"></i>Datos del solicitante</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre completo</label>
+                            <input type="text" class="form-control" id="nombreCliente" required>
+                            <div class="invalid-feedback">Ingresa tu nombre completo.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="emailCliente" required>
+                            <div class="invalid-feedback">Ingresa un email válido.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefonoCliente" required>
+                            <div class="invalid-feedback">Ingresa tu número de teléfono.</div>
+                        </div>
+
+                        <!-- Datos de cada pasajero -->
+                        <h6 class="fw-bold mb-3 mt-4"><i class="bi bi-people-fill me-2"></i>Datos de los pasajeros</h6>
+                        <div id="pasajerosContainer">
+                            <!-- Se llena dinámicamente según asientos seleccionados -->
+                        </div>
+
+                        <div class="form-check mb-3 mt-3">
+                            <input class="form-check-input" type="checkbox" id="aceptaNotificaciones">
+                            <label class="form-check-label" for="aceptaNotificaciones">
+                                <i class="bi bi-bell me-1"></i>Recibir notificaciones en este dispositivo
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100" id="btnSolicitarReserva">
+                            <i class="bi bi-send-check me-2"></i>Solicitar reserva
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary w-100 mb-2" id="btnVolverPaso3">
+                <i class="bi bi-arrow-left me-2"></i>Cambiar asientos
+            </button>
+        </section>
+
+        <!-- Pantalla de éxito -->
+        <section id="stepSuccess" class="step-content d-none">
+            <div class="card p-3 mb-3 text-center">
+                <div class="card-body">
+                    <i class="bi bi-check-circle-fill display-1" style="color: var(--verde-disponible);"></i>
+                    <h4 class="mt-3">¡Solicitud enviada!</h4>
+                    <p class="text-secondary">Tu código de solicitud es: <strong id="codigoSolicitud"></strong></p>
+
+                    <!-- NUEVO: contenedor del enlace mágico -->
+                    <div id="enlaceMagicoContainer" class="d-none mt-3">
+                        <div class="alert alert-info">
+                            <i class="bi bi-link-45deg me-1"></i>
+                            <strong>Guarda este enlace para consultar tu viaje más tarde:</strong><br>
+                            <a id="enlaceMagicoLink" href="#" target="_blank" class="text-break">
+                                <span id="enlaceMagicoURL"></span>
+                            </a>
+                        </div>
+                        <p class="small text-secondary mt-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Este enlace es personal e intransferible. No lo compartas. Si lo pierdes, puedes solicitar uno nuevo desde la sección "Mis viajes".
+                        </p>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-primary" id="btnInstalarPWA" style="display:none;">
+                            <i class="bi bi-download me-2"></i>Instalar app
+                        </button>
+                        <button class="btn btn-outline-primary" id="btnActivarNotif" style="display:none;">
+                            <i class="bi bi-bell me-2"></i>Activar notificaciones
+                        </button>
+                        <button class="btn btn-outline-secondary" id="btnNuevaSolicitud">
+                            <i class="bi bi-arrow-repeat me-2"></i>Nueva solicitud
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer de acciones rápidas -->
+    <footer class="footer-nav d-none" id="footerResumen">
+        <div class="container d-flex justify-content-between align-items-center" style="max-width: 540px;">
+            <div>
+                <span class="fw-semibold" id="footerAsientos">0 asientos</span>
+                <span class="text-secondary ms-2" id="footerPrecio"></span>
+            </div>
+            <button class="btn btn-primary btn-sm rounded-pill" id="btnIrResumen">
+                Continuar <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal genérico para mensajes -->
+    <div class="modal fade" id="modalMensaje" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalMensajeTitulo"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modalMensajeCuerpo"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para "Mis viajes" (recuperar enlace por código) -->
+    <div class="modal fade" id="modalMisViajes" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-archive me-2"></i>Consultar mis viajes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary">Ingresa el código de solicitud que recibiste al reservar.</p>
+                    <input type="text" class="form-control" id="codigoMisViajes" placeholder="Ej. LH-HLG-26-06-14-194312">
+                    <div class="invalid-feedback" id="errorCodigoMisViajes">Código no encontrado o inválido.</div>
+                    <!-- Zona donde aparecerá el enlace recuperado -->
+                    <div id="enlaceRecuperadoContainer" class="d-none mt-3">
+                        <p class="text-secondary small">Enlace de consulta:</p>
+                        <div class="input-group">
+                            <input type="text" id="enlaceRecuperadoInput" class="form-control" readonly>
+                            <button class="btn btn-outline-primary" type="button" id="btnCopiarEnlace">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <a id="enlaceRecuperadoLink" href="#" target="_blank" class="d-block mt-2 small">Abrir enlace</a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnBuscarEnlace">Buscar enlace</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle con Popper -->
+    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>-->
+
+    <!--Para manejo local, si Bootstrap 5 server falla-->
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+	
+    <!-- Supabase -->
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	
+	<!-- Configuración común -->
+	<script src="../js/supabase-config.js"></script>
+	
+	<!-- Lógica del cliente -->
+	<script src="app.js"></script>
+	
+</body>
+</html>

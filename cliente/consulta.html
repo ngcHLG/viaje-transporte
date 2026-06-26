@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de viaje - Viajes Transporte</title>
+    <!-- Bootstrap 5 CSS local -->
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons local -->
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <!-- Estilos personalizados (los mismos del cliente) -->
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="bg-body-secondary">
+    <div class="container py-4" style="max-width: 540px;">
+        <div class="text-center mb-4">
+            <i class="bi bi-bus-front-fill display-3" style="color: var(--azul-pastel);"></i>
+            <h4 class="mt-2">Viajes Transporte</h4>
+            <p class="text-secondary">Consulta el estado de tu viaje</p>
+        </div>
+
+        <!-- Zona de carga / error / contenido -->
+        <div id="estadoCarga" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-secondary">Verificando enlace...</p>
+        </div>
+
+        <div id="contenidoConsulta" class="d-none"></div>
+
+        <!-- Modo oscuro (igual que el cliente) -->
+        <div class="text-end mt-3">
+            <button class="btn btn-outline-secondary btn-sm rounded-pill" id="btnModoOscuro" title="Cambiar modo">
+                <i class="bi bi-moon-stars"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script>
+        // Modo oscuro (copiado del cliente)
+        (function() {
+            const btnModoOscuro = document.getElementById('btnModoOscuro');
+            const htmlElement = document.documentElement;
+            function actualizarIconoModo() {
+                if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+                    btnModoOscuro.innerHTML = '<i class="bi bi-sun-fill"></i>';
+                } else {
+                    btnModoOscuro.innerHTML = '<i class="bi bi-moon-stars"></i>';
+                }
+            }
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+            }
+            actualizarIconoModo();
+            btnModoOscuro.addEventListener('click', () => {
+                if (htmlElement.getAttribute('data-bs-theme') === 'dark') {
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                } else {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                }
+                actualizarIconoModo();
+            });
+        })();
+
+        // Obtener token de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        const cargaDiv = document.getElementById('estadoCarga');
+        const contenidoDiv = document.getElementById('contenidoConsulta');
+
+        function mostrarError(mensaje) {
+            cargaDiv.innerHTML = `
+                <i class="bi bi-exclamation-circle display-1 text-danger"></i>
+                <h5 class="mt-2">No se pudo mostrar el viaje</h5>
+                <p class="text-secondary">${mensaje}</p>
+            `;
+        }
+
+        async function consultarViaje() {
+            if (!token) {
+                mostrarError('Enlace inválido. No se encontró el código de acceso.');
+                return;
+            }
+
+            // 1. Verificar el token en magic_links
+            const { data: linkData, error: linkError } = await window.supabaseClient
+                .from('magic_links')
+                .select('solicitud_id, email, expira_en, usado')
+                .eq('token', token)
+                .single();
+
+            if (linkError || !linkData) {
+                mostrarError('El enlace no es válido o ya ha sido utilizado.');
+                return;
+            }
+
+            if (linkData.usado) {
+                mostrarError('Este enlace ya fue usado para consultar el viaje.');
+                return;
+            }
+
+            const ahora = new Date();
+            const expira = new Date(linkData.expira_en);
+            if (ahora > expira) {
+                mostrarError('El enlace ha caducado. Solicita uno nuevo desde la sección "Mis viajes".');
+                return;
+            }
+
+            // 2. Obtener la solicitud asociada
+            const { data: solicitud, error: solError } = await window.supabaseClient
+                .from('solicitudes')
+                .select('*, puntos_origen:origen_id(nombre), puntos_destino:destino_id(nombre)')
+                .eq('id', linkData.solicitud_id)
+                .single();
+
+            if (solError || !solicitud) {
+                mostrarError('No se encontró la información del viaje.');
+                return;
+            }
+
+            // 3. Obtener los pasajeros
+            const { data: pasajeros, error: pasError } = await window.supabaseClient
+                .from('pasajeros')
+                .select('numero_asiento, nombre, carnet')
+                .eq('solicitud_id', solicitud.id);
+
+            if (pasError) {
+                mostrarError('Error al cargar los datos de los pasajeros.');
+                return;
+            }
+
+            // 4. Obtener información del vehículo y chófer
+            let vehiculoInfo = {};
+            if (solicitud.vehiculo_id) {
+                const { data: vehiculo } = await window.supabaseClient
+                    .from('vehiculos')
+                    .select('tipo, placa, choferes(nombre, licencia)')
+                    .eq('id', solicitud.vehiculo_id)
+                    .single();
+                vehiculoInfo = vehiculo || {};
+            }
+
+            // 5. Marcar el enlace como usado
+            await window.supabaseClient
+                .from('magic_links')
+                .update({ usado: true })
+                .eq('token', token);
+
+            // 6. Construir la vista
+            const cliente = solicitud.datos_cliente || {};
+            const origenNombre = solicitud.puntos_origen?.nombre || solicitud.origen_id;
+            const destinoNombre = solicitud.puntos_destino?.nombre || solicitud.destino_id;
+            const vehiculoTexto = vehiculoInfo.tipo ? `${vehiculoInfo.tipo} (${vehiculoInfo.placa || ''})` : (solicitud.vehiculo_id || '-');
+            const chofer = vehiculoInfo.choferes ? `${vehiculoInfo.choferes.nombre} (Lic. ${vehiculoInfo.choferes.licencia || ''})` : '-';
+            const estadoBadge = {
+                'pendiente': 'badge-pendiente',
+                'confirmada': 'badge-confirmada',
+                'en_transito': 'badge-en_transito',
+                'completada': 'badge-completada',
+                'cancelada': 'badge-cancelada'
+            }[solicitud.estado] || 'bg-secondary';
+
+            let html = `
+                <div class="card p-3 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-info-circle me-2" style="color: var(--azul-pastel);"></i>Detalles del viaje</h5>
+                        <p><strong>Código:</strong> ${solicitud.id}</p>
+                        <p><strong>Estado:</strong> <span class="badge ${estadoBadge}">${solicitud.estado}</span></p>
+                        <p><strong>Fecha:</strong> ${solicitud.fecha_viaje}</p>
+                        <p><strong>Ruta:</strong> ${origenNombre} → ${destinoNombre}</p>
+                        <p><strong>Vehículo:</strong> ${vehiculoTexto}</p>
+                        <p><strong>Chófer:</strong> ${chofer}</p>
+                    </div>
+                </div>
+                <div class="card p-3 mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-people me-2" style="color: var(--azul-pastel);"></i>Pasajeros</h5>
+                        <table class="table table-sm table-bordered">
+                            <thead><tr><th>Asiento</th><th>Nombre</th><th>Carnet</th></tr></thead>
+                            <tbody>
+                                ${(pasajeros || []).map(p => `
+                                    <tr><td>${p.numero_asiento}</td><td>${p.nombre}</td><td>${p.carnet}</td></tr>
+                                `).join('')}
+                                ${(pasajeros || []).length === 0 ? '<tr><td colspan="3" class="text-center">No hay pasajeros registrados.</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="text-center text-secondary small">
+                    <i class="bi bi-clock-history me-1"></i>Última actualización: ${new Date().toLocaleString()}
+                </div>
+            `;
+
+            cargaDiv.classList.add('d-none');
+            contenidoDiv.innerHTML = html;
+            contenidoDiv.classList.remove('d-none');
+        }
+
+        consultarViaje();
+    </script>
+</body>
+</html>

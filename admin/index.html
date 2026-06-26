@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administración - Viajes Transporte</title>
+    <!-- Bootstrap 5 CSS local -->
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    
+	<!-- Bootstrap Icons local -->
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    
+	<!-- Estilos del panel -->
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center bg-body-secondary min-vh-100">
+    <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
+        <div class="text-center mb-4">
+            <i class="bi bi-bus-front-fill display-3" style="color: var(--azul-pastel);"></i>
+            <h4 class="mt-2">Viajes Transporte</h4>
+            <p class="text-secondary">Panel de Administración</p>
+        </div>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="usuario" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
+            </button>
+        </form>
+        <div class="text-end mt-2">
+            <button class="btn btn-outline-secondary btn-sm rounded-pill" id="btnModoOscuro" title="Cambiar modo">
+                <i class="bi bi-moon-stars"></i>
+            </button>
+        </div>
+    </div>
+
+	<script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="../js/supabase-config.js"></script>
+	<script>
+		// Verificar si ya hay sesión activa
+		async function checkSession() {
+			const { data: { session } } = await window.supabaseClient.auth.getSession();
+			if (session) {
+				window.location.href = 'dashboard.html';
+			}
+		}
+		checkSession();
+
+		// Login con Supabase Auth
+		document.getElementById('loginForm').addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const email = document.getElementById('usuario').value;
+			const password = document.getElementById('password').value;
+
+			const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+				email: email,
+				password: password
+			});
+
+			if (error) {
+				alert('Error al iniciar sesión: ' + error.message);
+			} else {
+				localStorage.setItem('adminSesion', 'activa');
+				window.location.href = 'dashboard.html';
+			}
+		});
+
+		// Modo oscuro
+		const btnModo = document.getElementById('btnModoOscuro');
+		const html = document.documentElement;
+
+		function actualizarIcono() {
+			btnModo.innerHTML = html.getAttribute('data-bs-theme') === 'dark'
+				? '<i class="bi bi-sun-fill"></i>'
+				: '<i class="bi bi-moon-stars"></i>';
+		}
+
+		btnModo.addEventListener('click', () => {
+			html.setAttribute('data-bs-theme',
+				html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+			actualizarIcono();
+		});
+
+		// Aplicar tema guardado
+		const temaGuardado = localStorage.getItem('adminTema');
+		if (temaGuardado) {
+			html.setAttribute('data-bs-theme', temaGuardado);
+		}
+		actualizarIcono();
+	</script>
+</body>
+</html>

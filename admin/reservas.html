@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Reservas - Administración</title>
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div id="sidebarContainer"></div>
+    <main class="main-content">
+        <h2 class="mb-4"><i class="bi bi-journal-text me-2"></i>Gestión de Reservas</h2>
+
+        <!-- Filtros (sin cambios) -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <select id="filtroEstado" class="form-select">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="confirmada">Confirmada</option>
+                            <option value="en_transito">En tránsito</option>
+                            <option value="completada">Completada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <input type="date" id="filtroFecha" class="form-control" placeholder="Fecha">
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <select id="filtroOrigen" class="form-select">
+                            <option value="">Origen</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <select id="filtroDestino" class="form-select">
+                            <option value="">Destino</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 col-sm-8 col-12">
+                        <input type="text" id="filtroTexto" class="form-control" placeholder="Buscar por código, cliente o email...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de reservas -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Fecha</th>
+                                <th>Ruta</th>
+                                <th>Cliente</th>
+                                <th>Asientos</th>
+                                <th>Vehículo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaReservas"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Controles de paginación -->
+            <div class="card-footer d-flex justify-content-between align-items-center" id="paginacionContainer">
+                <span class="text-secondary" id="infoPagina"></span>
+                <div class="btn-group" id="botonesPagina"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modales (sin cambios) -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Detalle de reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detalleContenido"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalModificar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Modificar reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nuevo vehículo</label>
+                        <select id="modVehiculo" class="form-select"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" id="btnGuardarModificacion">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        // Variables globales
+        let todasLasSolicitudes = [];
+        let vehiculosDisponibles = [];
+        let puntosLista = [];
+        let reservaEnEdicion = null;
+        const REGISTROS_POR_PAGINA = 50;
+        let paginaActual = 1;
+
+        // Cargar puntos para filtros
+        async function cargarPuntos() {
+            const { data, error } = await window.supabaseClient.from('puntos').select('id, nombre');
+            if (error) {
+                console.error('Error al cargar puntos:', error);
+                return;
+            }
+            puntosLista = data;
+            const origenSelect = document.getElementById('filtroOrigen');
+            const destinoSelect = document.getElementById('filtroDestino');
+            [origenSelect, destinoSelect].forEach(select => {
+                select.innerHTML = '<option value="">Todos</option>';
+                data.forEach(p => select.innerHTML += `<option value="${p.id}">${p.nombre || p.id}</option>`);
+            });
+        }
+
+        // Cargar vehículos para el modal de modificación
+        async function cargarVehiculos() {
+            const { data, error } = await window.supabaseClient
+                .from('vehiculos')
+                .select('id, tipo, placa, choferes(nombre, licencia)');
+            if (error) {
+                console.error('Error al cargar vehículos:', error);
+                return;
+            }
+            vehiculosDisponibles = data;
+        }
+
+        // Cargar todas las solicitudes (orden descendente por fecha_creacion)
+        async function cargarSolicitudes() {
+            const { data: solicitudes, error } = await window.supabaseClient
+                .from('solicitudes')
+                .select('*')
+                .order('fecha_creacion', { ascending: false });
+            if (error) {
+                console.error('Error al cargar solicitudes:', error);
+                return;
+            }
+
+            const { data: pasajeros, error: pasError } = await window.supabaseClient
+                .from('pasajeros')
+                .select('*');
+            if (pasError) {
+                console.error('Error al cargar pasajeros:', pasError);
+                return;
+            }
+
+            const pasajerosPorSolicitud = {};
+            pasajeros.forEach(p => {
+                if (!pasajerosPorSolicitud[p.solicitud_id]) {
+                    pasajerosPorSolicitud[p.solicitud_id] = {};
+                }
+                pasajerosPorSolicitud[p.solicitud_id][p.numero_asiento] = {
+                    nombre: p.nombre,
+                    carnet: p.carnet
+                };
+            });
+
+            const puntosNombres = {};
+            puntosLista.forEach(p => puntosNombres[p.id] = p.nombre || p.id);
+            const vehiculosInfo = {};
+            vehiculosDisponibles.forEach(v => vehiculosInfo[v.id] = v);
+
+            todasLasSolicitudes = solicitudes.map(s => {
+                const cliente = s.datos_cliente || {};
+                const vehiculo = vehiculosInfo[s.vehiculo_id];
+                return {
+                    id: s.id,
+                    fecha: s.fecha_viaje,
+                    origen: s.origen_id,
+                    destino: s.destino_id,
+                    origenNombre: puntosNombres[s.origen_id] || s.origen_id,
+                    destinoNombre: puntosNombres[s.destino_id] || s.destino_id,
+                    cliente: {
+                        nombre: cliente.nombre || '',
+                        email: cliente.email || '',
+                        telefono: cliente.telefono || ''
+                    },
+                    pasajeros: pasajerosPorSolicitud[s.id] || {},
+                    vehiculoId: s.vehiculo_id,
+                    vehiculoInfo: vehiculo ? `${vehiculo.tipo} (${vehiculo.placa})` : (s.vehiculo_id || '-'),
+                    chofer: vehiculo?.choferes ? `${vehiculo.choferes.nombre} (Lic. ${vehiculo.choferes.licencia})` : '',
+                    estado: s.estado,
+                    historial: s.historial || [],
+                    fechaCreacion: s.fecha_creacion
+                };
+            });
+
+            paginaActual = 1;  // Reiniciar paginación al cargar nuevos datos
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const estado = document.getElementById('filtroEstado').value;
+            const fecha = document.getElementById('filtroFecha').value;
+            const origen = document.getElementById('filtroOrigen').value;
+            const destino = document.getElementById('filtroDestino').value;
+            const texto = document.getElementById('filtroTexto').value.toLowerCase();
+
+            let filtradas = todasLasSolicitudes.filter(r => {
+                if (estado && r.estado !== estado) return false;
+                if (fecha && r.fecha !== fecha) return false;
+                if (origen && r.origen !== origen) return false;
+                if (destino && r.destino !== destino) return false;
+                if (texto) {
+                    const enCodigo = r.id.toLowerCase().includes(texto);
+                    const enCliente = r.cliente.nombre.toLowerCase().includes(texto) ||
+                                     r.cliente.email.toLowerCase().includes(texto);
+                    if (!enCodigo && !enCliente) return false;
+                }
+                return true;
+            });
+
+            // Paginación
+            const totalPaginas = Math.ceil(filtradas.length / REGISTROS_POR_PAGINA);
+            if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
+            const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
+            const paginaDatos = filtradas.slice(inicio, inicio + REGISTROS_POR_PAGINA);
+
+            renderizarTabla(paginaDatos);
+            renderizarPaginacion(filtradas.length, totalPaginas);
+        }
+
+        function renderizarTabla(reservasFiltradas) {
+            const tbody = document.getElementById('tablaReservas');
+            tbody.innerHTML = '';
+            reservasFiltradas.forEach(r => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><strong>${r.id}</strong></td>
+                    <td>${r.fecha}</td>
+                    <td>${r.origenNombre} → ${r.destinoNombre}</td>
+                    <td>${r.cliente.nombre}<br><small class="text-secondary">${r.cliente.email}</small></td>
+                    <td>${Object.keys(r.pasajeros).join(', ') || '-'}</td>
+                    <td>${r.vehiculoInfo}</td>
+                    <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <button class="btn btn-sm btn-outline-info" onclick="verDetalle('${r.id}')" title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${r.estado === 'pendiente' ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="cambiarEstado('${r.id}', 'confirmada')" title="Confirmar">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="abrirModificar('${r.id}')" title="Modificar vehículo">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            ` : ''}
+                            ${r.estado === 'confirmada' ? `
+                            <button class="btn btn-sm btn-outline-primary" onclick="cambiarEstado('${r.id}', 'en_transito')" title="Poner en tránsito">
+                                <i class="bi bi-truck"></i>
+                            </button>
+                            ` : ''}
+                            ${r.estado === 'en_transito' ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="cambiarEstado('${r.id}', 'completada')" title="Completar">
+                                <i class="bi bi-flag"></i>
+                            </button>
+                            ` : ''}
+                            ${r.estado !== 'completada' && r.estado !== 'cancelada' ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="cambiarEstado('${r.id}', 'cancelada')" title="Cancelar">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+
+        function renderizarPaginacion(totalRegistros, totalPaginas) {
+            document.getElementById('infoPagina').textContent =
+                `Mostrando página ${paginaActual} de ${totalPaginas} (${totalRegistros} registros)`;
+
+            const btnGroup = document.getElementById('botonesPagina');
+            btnGroup.innerHTML = '';
+
+            const btnAnterior = document.createElement('button');
+            btnAnterior.className = 'btn btn-sm btn-outline-secondary';
+            btnAnterior.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            btnAnterior.disabled = paginaActual === 1;
+            btnAnterior.addEventListener('click', () => {
+                if (paginaActual > 1) {
+                    paginaActual--;
+                    aplicarFiltros();
+                }
+            });
+            btnGroup.appendChild(btnAnterior);
+
+            // Botones de página (máximo 5 visibles)
+            const maxBotones = 5;
+            let inicioPag = Math.max(1, paginaActual - Math.floor(maxBotones / 2));
+            let finPag = Math.min(totalPaginas, inicioPag + maxBotones - 1);
+            if (finPag - inicioPag + 1 < maxBotones) {
+                inicioPag = Math.max(1, finPag - maxBotones + 1);
+            }
+
+            for (let i = inicioPag; i <= finPag; i++) {
+                const btnPagina = document.createElement('button');
+                btnPagina.className = `btn btn-sm ${i === paginaActual ? 'btn-primary' : 'btn-outline-secondary'}`;
+                btnPagina.textContent = i;
+                btnPagina.addEventListener('click', () => {
+                    paginaActual = i;
+                    aplicarFiltros();
+                });
+                btnGroup.appendChild(btnPagina);
+            }
+
+            const btnSiguiente = document.createElement('button');
+            btnSiguiente.className = 'btn btn-sm btn-outline-secondary';
+            btnSiguiente.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            btnSiguiente.disabled = paginaActual === totalPaginas;
+            btnSiguiente.addEventListener('click', () => {
+                if (paginaActual < totalPaginas) {
+                    paginaActual++;
+                    aplicarFiltros();
+                }
+            });
+            btnGroup.appendChild(btnSiguiente);
+        }
+
+        // Eventos de filtros (reiniciar página al cambiar)
+        ['filtroEstado', 'filtroFecha', 'filtroOrigen', 'filtroDestino', 'filtroTexto'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                paginaActual = 1;
+                aplicarFiltros();
+            });
+        });
+
+        // Ver detalle (sin cambios)
+        window.verDetalle = function(id) {
+            const r = todasLasSolicitudes.find(s => s.id === id);
+            if (!r) return;
+            const detalle = document.getElementById('detalleContenido');
+            detalle.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Información de la reserva</h6>
+                        <p><strong>Código:</strong> ${r.id}</p>
+                        <p><strong>Fecha:</strong> ${r.fecha} (Salida programada)</p>
+                        <p><strong>Ruta:</strong> ${r.origenNombre} → ${r.destinoNombre}</p>
+                        <p><strong>Vehículo:</strong> ${r.vehiculoInfo}</p>
+                        <p><strong>Chófer:</strong> ${r.chofer || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Cliente</h6>
+                        <p><strong>Nombre:</strong> ${r.cliente.nombre}</p>
+                        <p><strong>Email:</strong> ${r.cliente.email}</p>
+                        <p><strong>Teléfono:</strong> ${r.cliente.telefono}</p>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="fw-bold">Pasajeros</h6>
+                <table class="table table-sm table-bordered">
+                    <thead><tr><th>Asiento</th><th>Nombre</th><th>Carnet</th></tr></thead>
+                    <tbody>
+                        ${Object.entries(r.pasajeros).map(([asiento, datos]) => `
+                            <tr><td>${asiento}</td><td>${datos.nombre}</td><td>${datos.carnet}</td></tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <hr>
+                <h6 class="fw-bold">Historial de cambios</h6>
+                <ul class="list-group list-group-flush">
+                    ${(r.historial || []).map(h => `
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><span class="badge badge-${h.estado} me-2">${h.estado}</span></span>
+                            <small class="text-secondary">${new Date(h.fecha).toLocaleString()}</small>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+        };
+
+        // Cambiar estado (con cancelación automática de conflictos)
+        window.cambiarEstado = async function(id, nuevoEstado) {
+            const r = todasLasSolicitudes.find(s => s.id === id);
+            if (!r) return;
+            if (nuevoEstado === 'cancelada' && !confirm('¿Cancelar esta reserva?')) return;
+
+            const nuevoHistorial = [...(r.historial || []), {
+                estado: nuevoEstado,
+                fecha: new Date().toISOString(),
+                usuario: 'admin'
+            }];
+
+            const { error } = await window.supabaseClient
+                .from('solicitudes')
+                .update({ estado: nuevoEstado, historial: nuevoHistorial })
+                .eq('id', id);
+
+            if (error) {
+                alert('Error al actualizar el estado: ' + error.message);
+                return;
+            }
+
+            if (nuevoEstado === 'confirmada' && r.vehiculoId && r.fecha) {
+                const asientosConfirmados = Object.keys(r.pasajeros);
+                const conflictivas = todasLasSolicitudes.filter(s =>
+                    s.id !== r.id &&
+                    s.estado === 'pendiente' &&
+                    s.vehiculoId === r.vehiculoId &&
+                    s.fecha === r.fecha &&
+                    Object.keys(s.pasajeros).some(asiento => asientosConfirmados.includes(asiento))
+                );
+
+                for (const conflicto of conflictivas) {
+                    const historialConflicto = [...(conflicto.historial || []), {
+                        estado: 'cancelada',
+                        fecha: new Date().toISOString(),
+                        usuario: 'admin (automático por conflicto)'
+                    }];
+                    await window.supabaseClient
+                        .from('solicitudes')
+                        .update({ estado: 'cancelada', historial: historialConflicto })
+                        .eq('id', conflicto.id);
+                }
+            }
+
+            await cargarSolicitudes();
+        };
+
+        // Abrir modal para modificar vehículo (sin cambios)
+        window.abrirModificar = function(id) {
+            reservaEnEdicion = todasLasSolicitudes.find(s => s.id === id);
+            if (!reservaEnEdicion) return;
+
+            const selectVehiculo = document.getElementById('modVehiculo');
+            selectVehiculo.innerHTML = vehiculosDisponibles.map(v => `
+                <option value="${v.id}" ${v.id === reservaEnEdicion.vehiculoId ? 'selected' : ''}>
+                    ${v.tipo} (${v.placa}) - Chófer: ${v.choferes?.nombre || 'N/A'}
+                </option>
+            `).join('');
+
+            new bootstrap.Modal(document.getElementById('modalModificar')).show();
+        };
+
+        // Guardar modificación de vehículo (sin cambios)
+        document.getElementById('btnGuardarModificacion').addEventListener('click', async function() {
+            if (!reservaEnEdicion) return;
+            const nuevoVehiculoId = document.getElementById('modVehiculo').value;
+
+            const conflicto = todasLasSolicitudes.some(r =>
+                r.id !== reservaEnEdicion.id &&
+                r.vehiculoId === nuevoVehiculoId &&
+                r.fecha === reservaEnEdicion.fecha &&
+                ['pendiente', 'confirmada', 'en_transito'].includes(r.estado)
+            );
+            if (conflicto) {
+                alert('El vehículo ya está asignado a otra reserva activa en la misma fecha.');
+                return;
+            }
+
+            const nuevoHistorial = [...(reservaEnEdicion.historial || []), {
+                estado: 'modificada',
+                fecha: new Date().toISOString(),
+                usuario: 'admin'
+            }];
+
+            const { error } = await window.supabaseClient
+                .from('solicitudes')
+                .update({ vehiculo_id: nuevoVehiculoId, historial: nuevoHistorial })
+                .eq('id', reservaEnEdicion.id);
+
+            if (error) {
+                alert('Error al modificar: ' + error.message);
+                return;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('modalModificar')).hide();
+            await cargarSolicitudes();
+        });
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.all([cargarPuntos(), cargarVehiculos()]);
+            cargarSolicitudes();
+        });
+    </script>
+</body>
+</html>

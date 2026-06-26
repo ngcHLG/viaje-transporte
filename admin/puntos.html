@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puntos de Recogida - Administración</title>
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div id="sidebarContainer"></div>
+    <main class="main-content">
+        <h2 class="mb-4"><i class="bi bi-geo-alt-fill me-2"></i>Puntos de Recogida / Llegada</h2>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Lista de puntos</h5>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalPunto()">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo punto
+            </button>
+        </div>
+
+        <div class="row g-3" id="puntosGrid"></div>
+    </main>
+
+    <!-- Modal punto -->
+    <div class="modal fade" id="modalPunto" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalPuntoTitulo"><i class="bi bi-geo-alt me-2"></i>Punto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formPunto">
+                        <input type="hidden" id="puntoKey">
+                        <div class="mb-3">
+                            <label class="form-label">Ciudad</label>
+                            <input type="text" class="form-control" id="puntoCiudad" required>
+                            <small class="text-secondary">Ej: holguin, la_habana (sin espacios, en minúsculas para la clave interna)</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nombre visible</label>
+                            <input type="text" class="form-control" id="puntoNombre" placeholder="Ej: Terminal Holguín" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Imagen</label>
+                            <input type="file" class="form-control" id="puntoImagenFile" accept="image/*">
+                            <small class="text-secondary">Selecciona una imagen desde tu dispositivo.</small>
+                            <div class="mt-2 text-center">
+                                <img id="vistaPreviaImagen" src="" alt="Vista previa" style="max-height: 150px; display: none;" class="rounded border">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dirección</label>
+                            <textarea class="form-control" id="puntoDireccion" rows="2" required></textarea>
+                        </div>
+                        <!-- Nuevo campo: Provincia -->
+                        <div class="mb-3">
+                            <label class="form-label">Provincia</label>
+                            <select id="puntoProvincia" class="form-select" required>
+                                <option value="">Selecciona provincia...</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarPunto()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configuración común -->
+    <script src="../js/supabase-config.js"></script>
+    <!-- Datos o lógica del admin -->
+    <script src="js/admin.js"></script>
+    <script>
+ 	let puntosArray = [];
+	let provinciasLista = [];
+
+	async function cargarPuntos() {
+		const { data, error } = await window.supabaseClient.from('puntos').select('*, provincias(abreviatura)');
+		if (error) { console.error('Error al cargar puntos:', error); return; }
+		puntosArray = data;
+		renderizarPuntos();
+	}
+
+	async function cargarProvincias() {
+		const { data, error } = await window.supabaseClient.from('provincias').select('id, nombre');
+		if (error) { console.error('Error al cargar provincias:', error); return; }
+		provinciasLista = data;
+	}
+
+	const modalPunto = new bootstrap.Modal(document.getElementById('modalPunto'));
+	const vistaPrevia = document.getElementById('vistaPreviaImagen');
+	const inputFile = document.getElementById('puntoImagenFile');
+
+	// Vista previa
+	inputFile.addEventListener('change', function() {
+		const archivo = this.files[0];
+		if (archivo) {
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				vistaPrevia.src = e.target.result;
+				vistaPrevia.style.display = 'block';
+			};
+			reader.readAsDataURL(archivo);
+		} else {
+			vistaPrevia.style.display = 'none';
+		}
+	});
+
+	function renderizarPuntos() {
+		const grid = document.getElementById('puntosGrid');
+		grid.innerHTML = puntosArray.map(p => `
+			<div class="col-lg-4 col-md-6">
+				<div class="card h-100">
+					<img src="${p.imagen_url || 'https://placehold.co/400x200/e9ecef/6c757d?text=Sin+imagen'}" 
+						 class="card-img-top" style="height: 150px; object-fit: cover;" alt="${p.nombre}">
+					<div class="card-body">
+						<h6 class="card-title">${p.nombre}</h6>
+						<p class="card-text small text-secondary">${p.direccion || ''}</p>
+						<p class="card-text"><small>Provincia: ${p.provincias?.abreviatura || p.provincia_id}</small></p>
+						<div class="d-flex gap-1 mt-2">
+							<button class="btn btn-sm btn-outline-info" onclick="editarPunto('${p.id}')"><i class="bi bi-pencil"></i></button>
+							<button class="btn btn-sm btn-outline-danger" onclick="eliminarPunto('${p.id}')"><i class="bi bi-trash"></i></button>
+						</div>
+					</div>
+				</div>
+			</div>
+		`).join('');
+	}
+
+	window.abrirModalPunto = function(id = null) {
+		document.getElementById('formPunto').reset();
+		document.getElementById('puntoKey').value = id || '';
+		document.getElementById('modalPuntoTitulo').innerHTML = id ? '<i class="bi bi-pencil me-2"></i>Editar punto' : '<i class="bi bi-plus-lg me-2"></i>Nuevo punto';
+		vistaPrevia.style.display = 'none';
+
+		// Llenar selector de provincias
+		const selectProvincia = document.getElementById('puntoProvincia');
+		selectProvincia.innerHTML = '<option value="">Selecciona provincia...</option>';
+		provinciasLista.forEach(prov => {
+			selectProvincia.innerHTML += `<option value="${prov.id}">${prov.nombre}</option>`;
+		});
+
+		if (id) {
+			const p = puntosArray.find(p => p.id === id);
+			if (p) {
+				document.getElementById('puntoCiudad').value = p.id;
+				document.getElementById('puntoNombre').value = p.nombre;
+				document.getElementById('puntoDireccion').value = p.direccion || '';
+				if (p.provincia_id) document.getElementById('puntoProvincia').value = p.provincia_id;
+				if (p.imagen_url) {
+					vistaPrevia.src = p.imagen_url;
+					vistaPrevia.style.display = 'block';
+				}
+			}
+		}
+		modalPunto.show();
+	};
+
+	window.guardarPunto = async function() {
+		const idAnterior = document.getElementById('puntoKey').value;
+		const nuevoId = document.getElementById('puntoCiudad').value.trim().toLowerCase().replace(/\s/g, '_');
+		const nombre = document.getElementById('puntoNombre').value.trim();
+		const direccion = document.getElementById('puntoDireccion').value.trim();
+		const provinciaId = document.getElementById('puntoProvincia').value;
+		const archivo = inputFile.files[0];
+
+		if (!nuevoId || !nombre || !provinciaId) {
+			alert('Ciudad, nombre y provincia son obligatorios.');
+			return;
+		}
+
+		let imagenUrl = '';
+		const puntoExistente = puntosArray.find(p => p.id === (idAnterior || nuevoId));
+		if (puntoExistente && !archivo) {
+			imagenUrl = puntoExistente.imagen_url || '';
+		}
+
+		if (archivo) {
+			try {
+				imagenUrl = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = reject;
+					reader.readAsDataURL(archivo);
+				});
+			} catch (err) {
+				alert('Error al leer la imagen.');
+				return;
+			}
+		}
+
+		try {
+			if (idAnterior) {
+				if (idAnterior !== nuevoId) {
+					const { error: delErr } = await window.supabaseClient.from('puntos').delete().eq('id', idAnterior);
+					if (delErr) throw delErr;
+					const { error: insErr } = await window.supabaseClient.from('puntos').insert({
+						id: nuevoId, nombre, direccion, provincia_id: provinciaId, imagen_url: imagenUrl
+					});
+					if (insErr) throw insErr;
+				} else {
+					const { error: updErr } = await window.supabaseClient.from('puntos').update({
+						nombre, direccion, provincia_id: provinciaId, imagen_url: imagenUrl
+					}).eq('id', idAnterior);
+					if (updErr) throw updErr;
+				}
+			} else {
+				const { error: insErr } = await window.supabaseClient.from('puntos').insert({
+					id: nuevoId, nombre, direccion, provincia_id: provinciaId, imagen_url: imagenUrl
+				});
+				if (insErr) throw insErr;
+			}
+			modalPunto.hide();
+			cargarPuntos();
+		} catch (error) {
+			alert('Error al guardar: ' + error.message);
+		}
+	};
+
+	window.editarPunto = function(id) { abrirModalPunto(id); };
+	window.eliminarPunto = async function(id) {
+		if (!confirm('¿Eliminar este punto?')) return;
+		const { error } = await window.supabaseClient.from('puntos').delete().eq('id', id);
+		if (error) { alert('Error al eliminar: ' + error.message); return; }
+		cargarPuntos();
+	};
+
+	document.addEventListener('DOMContentLoaded', async () => {
+		await cargarProvincias();
+		cargarPuntos();
+	});
+    </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tarifas - Administración</title>
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body class="admin-body">
+    <div id="sidebarContainer"></div>
+    <main class="main-content">
+        <h2 class="mb-4"><i class="bi bi-cash-coin me-2"></i>Gestión de Tarifas</h2>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Rutas y precios</h5>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalTarifa()">
+                <i class="bi bi-plus-lg me-1"></i> Nueva ruta
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Origen</th>
+                        <th>Destino</th>
+                        <th>Precio (CUP)</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaTarifas"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal tarifa -->
+    <div class="modal fade" id="modalTarifa" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTarifaTitulo"><i class="bi bi-cash-coin me-2"></i>Tarifa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formTarifa">
+                        <input type="hidden" id="tarifaId">
+                        <div class="mb-3">
+                            <label class="form-label">Origen</label>
+                            <select id="tarifaOrigen" class="form-select" required>
+                                <!-- Opciones cargadas desde Supabase -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Destino</label>
+                            <select id="tarifaDestino" class="form-select" required>
+                                <!-- Opciones cargadas desde Supabase -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Precio del viaje (ida)</label>
+                            <input type="number" class="form-control" id="tarifaIda" min="0" required>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="tarifaActiva" checked>
+                            <label class="form-check-label">Ruta activa</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarTarifa()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        let tarifasArray = [];
+        let puntosLista = [];
+
+        async function cargarPuntosParaSelectores() {
+            const { data, error } = await window.supabaseClient.from('puntos').select('id, nombre');
+            if (error) {
+                console.error('Error al cargar puntos:', error);
+                return;
+            }
+            puntosLista = data;
+            const origenSelect = document.getElementById('tarifaOrigen');
+            const destinoSelect = document.getElementById('tarifaDestino');
+            [origenSelect, destinoSelect].forEach(select => {
+                select.innerHTML = '<option value="">Selecciona...</option>';
+                data.forEach(p => {
+                    select.innerHTML += `<option value="${p.id}">${p.nombre || p.id}</option>`;
+                });
+            });
+        }
+
+        async function cargarTarifas() {
+            const { data, error } = await window.supabaseClient.from('tarifas').select('*');
+            if (error) {
+                console.error('Error al cargar tarifas:', error);
+                return;
+            }
+            tarifasArray = data;
+            renderizarTarifas();
+        }
+
+        const modalTarifa = new bootstrap.Modal(document.getElementById('modalTarifa'));
+
+        function renderizarTarifas() {
+            const tbody = document.getElementById('tablaTarifas');
+            tbody.innerHTML = tarifasArray.map(t => `
+                <tr>
+                    <td>${t.origen_id}</td>
+                    <td>${t.destino_id}</td>
+                    <td>${t.precio_ida.toLocaleString()} CUP</td>
+                    <td>
+                        <span class="badge bg-${t.activa ? 'success' : 'secondary'}">
+                            ${t.activa ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="editarTarifa(${t.id})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarTarifa(${t.id})"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.abrirModalTarifa = function(id = null) {
+            document.getElementById('formTarifa').reset();
+            document.getElementById('tarifaId').value = id || '';
+            document.getElementById('modalTarifaTitulo').innerHTML = id ? '<i class="bi bi-pencil me-2"></i>Editar tarifa' : '<i class="bi bi-plus-lg me-2"></i>Nueva tarifa';
+
+            if (id) {
+                const t = tarifasArray.find(t => t.id === id);
+                if (t) {
+                    document.getElementById('tarifaOrigen').value = t.origen_id;
+                    document.getElementById('tarifaDestino').value = t.destino_id;
+                    document.getElementById('tarifaIda').value = t.precio_ida;
+                    document.getElementById('tarifaActiva').checked = t.activa;
+                }
+            }
+            modalTarifa.show();
+        };
+
+        window.guardarTarifa = async function() {
+            const id = document.getElementById('tarifaId').value;
+            const origen = document.getElementById('tarifaOrigen').value;
+            const destino = document.getElementById('tarifaDestino').value;
+            const ida = parseInt(document.getElementById('tarifaIda').value);
+            const activa = document.getElementById('tarifaActiva').checked;
+
+            if (!origen || !destino || origen === destino) {
+                alert('Selecciona origen y destino diferentes.');
+                return;
+            }
+
+            const duplicado = tarifasArray.find(t => t.origen_id === origen && t.destino_id === destino && (!id || t.id !== id));
+            if (duplicado) {
+                alert('Ya existe una tarifa para esa ruta.');
+                return;
+            }
+
+            try {
+                if (id) {
+                    const { error } = await window.supabaseClient.from('tarifas').update({
+                        origen_id: origen,
+                        destino_id: destino,
+                        precio_ida: ida,
+                        activa
+                    }).eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await window.supabaseClient.from('tarifas').insert({
+                        origen_id: origen,
+                        destino_id: destino,
+                        precio_ida: ida,
+                        activa
+                    });
+                    if (error) throw error;
+                }
+
+                modalTarifa.hide();
+                cargarTarifas();
+            } catch (error) {
+                alert('Error al guardar la tarifa: ' + error.message);
+            }
+        };
+
+        window.editarTarifa = function(id) {
+            abrirModalTarifa(id);
+        };
+
+        window.eliminarTarifa = async function(id) {
+            if (!confirm('¿Eliminar esta tarifa?')) return;
+            const { error } = await window.supabaseClient.from('tarifas').delete().eq('id', id);
+            if (error) {
+                alert('Error al eliminar: ' + error.message);
+                return;
+            }
+            cargarTarifas();
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarPuntosParaSelectores();
+            cargarTarifas();
+        });
+    </script>
+</body>
+</html>

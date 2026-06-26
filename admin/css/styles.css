@@ -1,0 +1,188 @@
+/* Hereda las variables y estilos base del cliente */
+@import url('../../cliente/styles.css');
+
+/* Layout del panel */
+.admin-body {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Barra superior fija */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background-color: #ffffff;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 1050;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+[data-bs-theme="dark"] .top-bar {
+    background-color: #1e293b;
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+.top-bar .brand {
+    font-weight: 600;
+    color: var(--azul-pastel);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+.top-bar .btn-toggle-sidebar {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--texto-principal);
+    cursor: pointer;
+    padding: 0.25rem;
+}
+[data-bs-theme="dark"] .top-bar .btn-toggle-sidebar {
+    color: #f1f5f9;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #ffffff;
+    border-right: 1px solid rgba(0,0,0,0.05);
+    position: fixed;
+    top: 56px;          /* justo debajo de la barra */
+    bottom: 0;
+    left: 0;
+    z-index: 1040;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+[data-bs-theme="dark"] .sidebar {
+    background-color: #1e293b;
+    border-right-color: rgba(255,255,255,0.1);
+}
+
+.sidebar .nav-link {
+    color: var(--texto-principal);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem 0.75rem;
+    transition: background-color 0.2s;
+}
+[data-bs-theme="dark"] .sidebar .nav-link {
+    color: #e2e8f0;
+}
+[data-bs-theme="dark"] .sidebar .nav-link:hover,
+[data-bs-theme="dark"] .sidebar .nav-link.active {
+    background-color: #334155;
+    color: #ffffff;
+}
+
+.sidebar h5 {
+    color: var(--texto-principal);
+}
+[data-bs-theme="dark"] .sidebar h5 {
+    color: #f1f5f9;
+}
+[data-bs-theme="dark"] .sidebar .text-secondary {
+    color: #cbd5e1 !important;
+}
+
+/* Contenido principal */
+.main-content {
+    flex: 1;
+    margin-left: 250px;
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: var(--fondo-claro);
+    transition: margin-left 0.3s ease;
+    margin-top: 56px;   /* altura de la barra superior */
+}
+[data-bs-theme="dark"] .main-content {
+    background-color: #212529;
+    color: #EAEAEA;
+}
+
+/* Sidebar colapsable (escritorio) */
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
+.main-content.expanded {
+    margin-left: 0;
+}
+
+/* Comportamiento responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
+
+/* Tarjetas de estadísticas */
+.stat-card {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.15s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+.stat-card .icon {
+    font-size: 2rem;
+}
+
+/* Tabla de datos */
+.table-responsive {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.table th {
+    font-weight: 600;
+    background-color: var(--gris-azulado);
+    color: var(--texto-principal);
+}
+[data-bs-theme="dark"] .table th {
+    background-color: #3a4755;
+    color: #EAEAEA;
+}
+[data-bs-theme="dark"] .table {
+    color: #EAEAEA;
+}
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,0.075);
+}
+[data-bs-theme="dark"] .card-header {
+    background-color: rgba(255,255,255,0.05);
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+
+/* Badges personalizados */
+.badge-pendiente {
+    background-color: #FFE08A;
+    color: #856404;
+}
+.badge-confirmada {
+    background-color: #A8C4E2;
+    color: #0c5460;
+}
+.badge-en_transito {
+    background-color: #B8D9C0;
+    color: #155724;
+}
+.badge-completada {
+    background-color: #C4E4F5;
+    color: #0c5460;
+}
+.badge-cancelada {
+    background-color: var(--rojo-pastel);
+    color: #721c24;
+}

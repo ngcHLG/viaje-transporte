@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Administración</title>
+    <link href="../bootstrap-5.3.8-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-icons-1.13.1/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <style>
+        .barra-ingresos { height: 24px; border-radius: 4px; background-color: var(--gris-azulado); overflow: hidden; }
+        .barra-ingresos .relleno { height: 100%; border-radius: 4px; background-color: var(--azul-pastel); transition: width 0.5s ease; }
+        .barra-ocupacion { height: 24px; border-radius: 4px; background-color: #e9ecef; overflow: hidden; }
+        .barra-ocupacion .ocupado { height: 100%; background-color: var(--rojo-pastel); float: left; }
+        .barra-ocupacion .libre { height: 100%; background-color: var(--verde-disponible); float: left; }
+    </style>
+</head>
+<body class="admin-body">
+    <div id="sidebarContainer"></div>
+    <main class="main-content">
+        <h2 class="mb-4"><i class="bi bi-bar-chart me-2"></i>Reportes</h2>
+
+        <!-- Filtros comunes -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha desde</label>
+                        <input type="date" id="filtroDesde" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha hasta</label>
+                        <input type="date" id="filtroHasta" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Origen</label>
+                        <select id="filtroOrigenReporte" class="form-select">
+                            <option value="">Todos</option>
+                            <!-- Opciones cargadas dinámicamente desde el backend -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Destino</label>
+                        <select id="filtroDestinoReporte" class="form-select">
+                            <option value="">Todos</option>
+                            <!-- Opciones cargadas dinámicamente desde el backend -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestañas de reportes -->
+        <ul class="nav nav-tabs mb-4" id="reportesTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="ingresos-tab" data-bs-toggle="tab" data-bs-target="#ingresos" type="button" role="tab">
+                    <i class="bi bi-cash-stack me-1"></i> Ingresos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ocupacion-tab" data-bs-toggle="tab" data-bs-target="#ocupacion" type="button" role="tab">
+                    <i class="bi bi-pie-chart me-1"></i> Ocupación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="viajes-tab" data-bs-toggle="tab" data-bs-target="#viajes" type="button" role="tab">
+                    <i class="bi bi-bus-front me-1"></i> Viajes
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="reportesTabsContent">
+            <!-- Ingresos -->
+            <div class="tab-pane fade show active" id="ingresos" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="mb-0">Ingresos por ruta</h5></div>
+                    <div class="card-body" id="ingresosRuta"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0">Ingresos totales</h5></div>
+                    <div class="card-body text-center"><h3 id="ingresosTotales" class="fw-bold"></h3></div>
+                </div>
+            </div>
+
+            <!-- Ocupación -->
+            <div class="tab-pane fade" id="ocupacion" role="tabpanel">
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0">Ocupación por vehículo (asientos vendidos vs capacidad)</h5></div>
+                    <div class="card-body" id="ocupacionVehiculos"></div>
+                </div>
+            </div>
+
+            <!-- Viajes -->
+            <div class="tab-pane fade" id="viajes" role="tabpanel">
+                <div class="row g-3 mb-4" id="estadisticasViajes"></div>
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0">Viajes completados vs cancelados</h5></div>
+                    <div class="card-body" id="viajesComparativa"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        // Puntos para los filtros
+        async function cargarPuntos() {
+            const { data, error } = await window.supabaseClient.from('puntos').select('id, nombre');
+            if (error) return;
+            const origenSelect = document.getElementById('filtroOrigenReporte');
+            const destinoSelect = document.getElementById('filtroDestinoReporte');
+            [origenSelect, destinoSelect].forEach(select => {
+                select.innerHTML = '<option value="">Todos</option>';
+                data.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.nombre || p.id}</option>`; });
+            });
+        }
+
+        // Obtener filtros actuales
+        function getFiltros() {
+            return {
+                desde: document.getElementById('filtroDesde').value,
+                hasta: document.getElementById('filtroHasta').value,
+                origen: document.getElementById('filtroOrigenReporte').value,
+                destino: document.getElementById('filtroDestinoReporte').value
+            };
+        }
+
+        // Construir consulta base de solicitudes con filtros
+        function querySolicitudes() {
+            const f = getFiltros();
+            let q = window.supabaseClient.from('solicitudes').select('id, fecha_viaje, origen_id, destino_id, vehiculo_id, estado');
+            if (f.desde) q = q.gte('fecha_viaje', f.desde);
+            if (f.hasta) q = q.lte('fecha_viaje', f.hasta);
+            if (f.origen) q = q.eq('origen_id', f.origen);
+            if (f.destino) q = q.eq('destino_id', f.destino);
+            return q;
+        }
+
+        // ---------- INGRESOS ----------
+        async function generarReporteIngresos() {
+            const { data: solicitudes, error } = await querySolicitudes()
+                .in('estado', ['confirmada', 'en_transito', 'completada']);
+            if (error) { console.error(error); return; }
+
+            // Obtener tarifas (cache)
+            const { data: tarifasData } = await window.supabaseClient.from('tarifas').select('origen_id, destino_id, precio_ida');
+            const tarifasMap = {};
+            (tarifasData || []).forEach(t => { tarifasMap[`${t.origen_id}-${t.destino_id}`] = t.precio_ida; });
+
+            // Obtener pasajeros de esas solicitudes
+            const ids = solicitudes.map(s => s.id);
+            let pasajeros = [];
+            if (ids.length > 0) {
+                const { data: pas } = await window.supabaseClient.from('pasajeros').select('solicitud_id').in('solicitud_id', ids);
+                pasajeros = pas || [];
+            }
+            // Contar pasajeros por solicitud
+            const countPorSolicitud = {};
+            pasajeros.forEach(p => { countPorSolicitud[p.solicitud_id] = (countPorSolicitud[p.solicitud_id] || 0) + 1; });
+
+            const ingresosPorRuta = {};
+            solicitudes.forEach(s => {
+                const key = `${s.origen_id} → ${s.destino_id}`;
+                const precio = tarifasMap[`${s.origen_id}-${s.destino_id}`] || 0;
+                const cant = countPorSolicitud[s.id] || 0;
+                const ingreso = precio * cant;
+                ingresosPorRuta[key] = (ingresosPorRuta[key] || 0) + ingreso;
+            });
+
+            const maxIngreso = Math.max(...Object.values(ingresosPorRuta), 1);
+            const container = document.getElementById('ingresosRuta');
+            let html = '<div class="row">';
+            for (const [ruta, ingreso] of Object.entries(ingresosPorRuta)) {
+                const pct = (ingreso / maxIngreso) * 100;
+                html += `<div class="col-12 mb-3"><div class="d-flex justify-content-between mb-1"><span class="fw-semibold">${ruta}</span><span>${ingreso.toLocaleString()} CUP</span></div><div class="barra-ingresos"><div class="relleno" style="width:${pct}%"></div></div></div>`;
+            }
+            html += '</div>';
+            if (!Object.keys(ingresosPorRuta).length) html = '<p class="text-secondary">No hay ingresos con los filtros seleccionados.</p>';
+            container.innerHTML = html;
+
+            const total = Object.values(ingresosPorRuta).reduce((a, b) => a + b, 0);
+            document.getElementById('ingresosTotales').textContent = total.toLocaleString() + ' CUP';
+        }
+
+        // ---------- OCUPACIÓN ----------
+        async function generarReporteOcupacion() {
+            const { data: solicitudes } = await querySolicitudes()
+                .in('estado', ['confirmada', 'en_transito', 'completada']);
+            const { data: vehiculos } = await window.supabaseClient.from('vehiculos').select('id, tipo, placa, capacidad');
+
+            const ids = (solicitudes || []).map(s => s.id);
+            let pasajeros = [];
+            if (ids.length > 0) {
+                const { data: pas } = await window.supabaseClient.from('pasajeros').select('solicitud_id').in('solicitud_id', ids);
+                pasajeros = pas || [];
+            }
+            const countPorSolicitud = {};
+            pasajeros.forEach(p => { countPorSolicitud[p.solicitud_id] = (countPorSolicitud[p.solicitud_id] || 0) + 1; });
+
+            const ocupacion = {};
+            (vehiculos || []).forEach(v => { ocupacion[v.id] = { tipo: v.tipo, placa: v.placa, capacidad: v.capacidad || 41, vendidos: 0 }; });
+
+            (solicitudes || []).forEach(s => {
+                if (s.vehiculo_id && ocupacion[s.vehiculo_id]) {
+                    ocupacion[s.vehiculo_id].vendidos += (countPorSolicitud[s.id] || 0);
+                }
+            });
+
+            const container = document.getElementById('ocupacionVehiculos');
+            let html = '';
+            for (const [id, d] of Object.entries(ocupacion)) {
+                const pct = d.capacidad > 0 ? (d.vendidos / d.capacidad) * 100 : 0;
+                html += `<div class="mb-3"><div class="d-flex justify-content-between mb-1"><span class="fw-semibold">${d.tipo} (${d.placa}) - ${d.capacidad} asientos</span><span>${d.vendidos} vendidos (${pct.toFixed(1)}%)</span></div><div class="barra-ocupacion"><div class="ocupado" style="width:${pct}%"></div><div class="libre" style="width:${100 - pct}%"></div></div></div>`;
+            }
+            if (!html) html = '<p class="text-secondary">No hay datos de ocupación con los filtros seleccionados.</p>';
+            container.innerHTML = html;
+        }
+
+        // ---------- VIAJES ----------
+        async function generarReporteViajes() {
+            const { data: solicitudes } = await querySolicitudes();
+            const total = (solicitudes || []).length;
+            const completadas = solicitudes.filter(r => r.estado === 'completada').length;
+            const canceladas = solicitudes.filter(r => r.estado === 'cancelada').length;
+            const pendientes = solicitudes.filter(r => r.estado === 'pendiente').length;
+            const confirmadas = solicitudes.filter(r => r.estado === 'confirmada').length;
+            const enTransito = solicitudes.filter(r => r.estado === 'en_transito').length;
+
+            document.getElementById('estadisticasViajes').innerHTML = `
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-info-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Total</p><h3 class="fw-bold">${total}</h3></div></div></div>
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-warning-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Pendientes</p><h3 class="fw-bold">${pendientes}</h3></div></div></div>
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-primary-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Confirmadas</p><h3 class="fw-bold">${confirmadas}</h3></div></div></div>
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">En tránsito</p><h3 class="fw-bold">${enTransito}</h3></div></div></div>
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-success-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Completadas</p><h3 class="fw-bold">${completadas}</h3></div></div></div>
+                <div class="col-lg-2 col-md-4 col-6"><div class="card stat-card p-3 bg-danger-subtle h-100"><div class="text-center"><p class="mb-1 text-secondary small">Canceladas</p><h3 class="fw-bold">${canceladas}</h3></div></div></div>
+            `;
+
+            const totalCompCan = completadas + canceladas || 1;
+            const pctComp = (completadas / totalCompCan) * 100;
+            const pctCanc = (canceladas / totalCompCan) * 100;
+            document.getElementById('viajesComparativa').innerHTML = `
+                <div class="mb-3"><div class="d-flex justify-content-between mb-1"><span class="fw-semibold"><span class="badge bg-success me-2">&nbsp;</span>Completadas</span><span>${completadas} (${pctComp.toFixed(1)}%)</span></div><div class="barra-ocupacion"><div class="ocupado" style="width:${pctComp}%;background-color:var(--verde-disponible)"></div><div class="libre" style="width:${pctCanc}%;background-color:var(--rojo-pastel)"></div></div></div>
+                <div class="d-flex justify-content-between"><span class="fw-semibold"><span class="badge bg-danger me-2">&nbsp;</span>Canceladas</span><span>${canceladas} (${pctCanc.toFixed(1)}%)</span></div>
+            `;
+        }
+
+        function generarTodosLosReportes() {
+            generarReporteIngresos();
+            generarReporteOcupacion();
+            generarReporteViajes();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarPuntos();
+            generarTodosLosReportes();
+            ['filtroDesde', 'filtroHasta', 'filtroOrigenReporte', 'filtroDestinoReporte'].forEach(id => {
+                document.getElementById(id).addEventListener('input', generarTodosLosReportes);
+            });
+        });
+    </script>
+</body>
+</html>
